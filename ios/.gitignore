@@ -1,0 +1,55 @@
+# Xcode
+*.xcworkspace
+!default.xcworkspace
+xcuserdata/
+DerivedData/
+.idea/
+*.hmap
+*.ipa
+*.xcuserstate
+*.moved-aside
+*.xcscmblueprint
+
+# SwiftPM
+.build/
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Carthage
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+
+# SPM
+Packages/
+Package.pins
+Package.resolved
+
+# Misc
+.DS_Store
+*.swp
+*.lock
+*.log
+
+# Firebase
+GoogleService-Info.plist
+
+# Env & config
+.env
+*.xcconfig
+
+# Tuist
+ProjectDescriptionHelpers/
+Tuist/Dependencies/
+
+# Xcode Cloud
+.xcodecloud/
+
+# Cache
+*.xcassets/Assets.car
