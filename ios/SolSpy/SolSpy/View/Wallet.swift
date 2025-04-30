@@ -8,8 +8,147 @@
 import SwiftUI
 
 struct Wallet: View {
+    
+    var background: Color = Color(red: 0.027, green: 0.035, blue: 0.039)
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        ZStack {
+            
+            background.ignoresSafeArea()
+            
+            VStack(spacing: 30) {
+                
+                //Header action bar
+                HStack {
+                    HStack {
+                        Image(systemName: "chevron.left")
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+                    .frame(width: 40, height: 40)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(10)
+                    
+                    Spacer()
+                    
+                    HStack {
+                        HStack {
+                            Image(systemName: "square.and.arrow.up")
+                                .foregroundStyle(.white.opacity(0.5))
+                        }
+                        .frame(width: 40, height: 40)
+                        .background(Color.white.opacity(0.05))
+                        .cornerRadius(10)
+                        
+                        HStack {
+                            Image(systemName: "document.on.document")
+                                .foregroundStyle(.white.opacity(0.5))
+                        }
+                        .frame(width: 40, height: 40)
+                        .background(Color.white.opacity(0.05))
+                        .cornerRadius(10)
+                    }
+                }
+                
+                //Wallet title
+                VStack(alignment: .leading, spacing: 15) {
+                    Text("Wallet")
+                        .font(.system(size: 20, weight: .regular, design: .default))
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("4UqZh...pvDVS")
+                            .font(.system(size: 36, weight: .regular, design: .default))
+                        Text("4UqZhyrQgBEnTbD24N1LuPmzLasH8acdjkEEd4XpvDVS")
+                            .font(.system(size: 12, weight: .regular, design: .default))
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                //Account Balance
+                ZStack {
+                    
+                    VStack {
+                        VStack(alignment: .leading, spacing: 20) {
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("Account Balance")
+                                    .foregroundStyle(Color.gray)
+                                    .font(.subheadline)
+                                
+                                Text("$33,549.00")
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 32, weight: .regular))
+                            }
+                            
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text("SOL Balance")
+                                        .foregroundStyle(Color.gray)
+                                        .font(.caption)
+                                    Text("525 SOL ($27,549)")
+                                        .foregroundStyle(.white)
+                                        .font(.subheadline)
+                                }
+                                
+                                Spacer()
+                                
+                                VStack(alignment: .leading) {
+                                    Text("Token Balance")
+                                        .foregroundStyle(Color.gray)
+                                        .font(.caption)
+                                    Text("15 Tokens ($6,442)")
+                                        .foregroundStyle(.white)
+                                        .font(.subheadline)
+                                }
+                            }
+                            
+                            HStack {
+                                Image(systemName: "dollarsign.circle.fill")
+                                    .foregroundStyle(.white)
+                                Text("6.35K USDC (~$6.35K)")
+                                    .foregroundStyle(.white)
+                                Spacer()
+                                Image(systemName: "plus")
+                                    .foregroundStyle(.white.opacity(0.5))
+                            }
+                            .padding()
+                            .background(Color.white.opacity(0.05))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        .padding(10)
+                    }
+                    .background(Color.white.opacity(0.02))
+                    
+                    Circle()
+                        .fill(Color.green.opacity(0.4))
+                        .frame(width: 150, height: 150)
+                        .blur(radius: 60)
+                        .offset(x: 150, y: -100)
+                }
+                .clipped()
+                .cornerRadius(15)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 15)
+                        .stroke(
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 0.5
+                        )
+                )
+                
+                
+                //More info
+                
+                //Transactions
+                
+                
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
+        }
+        .foregroundStyle(.white)
     }
 }
 
