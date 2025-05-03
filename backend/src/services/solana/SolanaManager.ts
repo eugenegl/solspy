@@ -8,7 +8,7 @@ import { HeliusManager } from "./HeliusManager";
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { TransactionMessage } from "@solana/web3.js";
 import { Helpers } from "../helpers/Helpers";
-import { Interface } from "helius-sdk";
+import { EnrichedTransaction, Helius, Interface } from "helius-sdk";
 import BN from "bn.js";
 import { kSolAddress } from './Constants';
 
@@ -334,9 +334,6 @@ export class SolanaManager {
         const heliusAssets = heliusData.items;
         const nativeBalance = heliusData.nativeBalance;
 
-        // console.log('heliusData:', JSON.stringify(heliusData));
-        console.log('heliusData.length:', heliusData.items.length);
-
         const assets: Asset[] = [];
 
         const sol: Asset = {
@@ -385,8 +382,6 @@ export class SolanaManager {
 
             assets.push(asset);
         }
-
-        console.log('!assets.length:', assets.length);
 
         for (const asset of assets) {
             if (asset.priceInfo){
@@ -441,6 +436,19 @@ export class SolanaManager {
             return true;
         }
         return false;
+    }
+
+    static async getLatestTransactions(walletAddress: string, limit: number = 10): Promise<EnrichedTransaction[]> {
+        const connection = newConnection();
+        const publicKey = new web3.PublicKey(walletAddress);
+        const signatures = await connection.getSignaturesForAddress(publicKey, { limit: limit });
+
+        const signs = signatures.map((signature) => {
+            return signature.signature;
+        });
+
+        const txs = await HeliusManager.getTransactions(signs);
+        return txs;
     }
 
     // static async getWalletTokensBalances(walletAddress: string): Promise<{mint: string, symbol?: string, name?: string, balance: TokenBalance}[]>{

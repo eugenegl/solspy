@@ -22,14 +22,14 @@ export class HeliusManager {
         }
     }
 
-    static async getTransaction(signature: string): Promise<EnrichedTransaction | undefined> {
+    static async getTransactions(signatures: string[]): Promise<EnrichedTransaction[]> {
         this.initHelius();
 
         const apiEndpoint = this.helius.getApiEndpoint('/v0/transactions');
         const result = await axios.post(apiEndpoint, {
-            transactions: [signature],
+            transactions: signatures,
         });
-        return result.data[0] || undefined;
+        return result.data || [];
     }
 
     static async getAssetsByOwner(walletAddress: string, options: DAS.DisplayOptions, page = 1): Promise<{items: DAS.GetAssetResponse[], nativeBalance?: DAS.NativeBalanceInfo}> {
