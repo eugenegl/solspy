@@ -12,6 +12,7 @@ import { Asset, SolanaManager } from "../../services/solana/SolanaManager";
 import { Helpers } from "../../services/helpers/Helpers";
 import { EnrichedTransaction } from "helius-sdk";
 import { HeliusManager } from "../../services/solana/HeliusManager";
+import { HeliusAsset } from "../../services/solana/HeliusTypes";
 
 const router = express.Router();
 
@@ -29,6 +30,7 @@ router.get(
         let assets: Asset[] | undefined = undefined;
         let transactions: EnrichedTransaction[] | undefined;
         let transaction: EnrichedTransaction | undefined = undefined;
+        let token: HeliusAsset | undefined = undefined;
 
         try {
             if (bs58.decode(address).length == 64){
@@ -62,11 +64,6 @@ router.get(
                         addressType = AddressType.TOKEN_ACCOUNT;
                     }
                 }
-
-                console.log('info', info);
-                console.log('data.length', info.data.length);
-                
-
             }
         }
         catch (err) {
@@ -97,6 +94,9 @@ router.get(
                 transaction = txs[0];
             }
         }
+        else if (addressType == AddressType.TOKEN){
+            token = await HeliusManager.getAsset(address);
+        }
 
         console.log('assets.length', assets?.length);
         
@@ -107,6 +107,7 @@ router.get(
             assets: assets,
             transactions: transactions,
             transaction: transaction,
+            token: token,
 		};
         
 

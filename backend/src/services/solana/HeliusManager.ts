@@ -62,7 +62,7 @@ export class HeliusManager {
         }
     }
 
-    static async getAsset(mintToken: string, displayOptions: HeliusAssetDisplayOptions): Promise<HeliusAsset | undefined> {
+    static async getAsset(mintToken: string): Promise<HeliusAsset | undefined> {
         try {
             const response = await fetch(this.apiUrl, {
                 method: 'POST',
@@ -75,15 +75,16 @@ export class HeliusManager {
                     method: 'getAsset',
                     params: {
                         id: mintToken,
-                        displayOptions: {​
-                            showUnverifiedCollections: true,​
-                            showCollectionMetadata: false,​
-                            showFungible: false,​
-                            showInscription: false​
-                        }
+                        // displayOptions: {​
+                        //     showUnverifiedCollections: true,​
+                        //     showCollectionMetadata: false,​
+                        //     showFungible: false,​
+                        //     showInscription: false​
+                        // }
                     },
                 }),
             });
+            console.log('getAsset response', response);
             const { result } = await response.json() as any;
             return result;
         }
