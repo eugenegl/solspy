@@ -70,3 +70,13 @@ export interface Amount {
     uiAmount: number;
     decimals: number;
 }
+
+export enum AddressType {
+    TRANSACTION = 'TRANSACTION',
+    WALLET = 'WALLET',
+    TOKEN = 'TOKEN',
+    TOKEN_ACCOUNT = 'TOKEN_ACCOUNT',
+    PROGRAM = 'PROGRAM',
+    STAKE_ACCOUNT = 'STAKE_ACCOUNT',
+    VOTE_ACCOUNT = 'VOTE_ACCOUNT',
+}

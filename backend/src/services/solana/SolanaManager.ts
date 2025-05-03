@@ -319,7 +319,7 @@ export class SolanaManager {
         return results;
     };
 
-    static async getAssetsByOwner(walletAddress: string): Promise<{ assets: Asset[] }> {
+    static async getAssetsByOwner(walletAddress: string): Promise<{ sol: Asset, assets: Asset[] }> {
         const heliusData = await HeliusManager.getAssetsByOwner(walletAddress, {
             showNativeBalance: true,
             showFungible: true,
@@ -334,37 +334,70 @@ export class SolanaManager {
         const heliusAssets = heliusData.items;
         const nativeBalance = heliusData.nativeBalance;
 
-        console.log('heliusData:', JSON.stringify(heliusData));
+        // console.log('heliusData:', JSON.stringify(heliusData));
+        console.log('heliusData.length:', heliusData.items.length);
 
         const assets: Asset[] = [];
 
-        if (nativeBalance){
+        const sol: Asset = {
+            address: kSolAddress,
+            amount: nativeBalance?.lamports || 0,
+            uiAmount: (nativeBalance?.lamports || 0) / web3.LAMPORTS_PER_SOL,
+            decimals: 9,
+            symbol: 'SOL',
+            name: 'Solana',
+            logo: 'https://light.dangervalley.com/static/sol.png',
+            priceInfo: { 
+                pricePerToken: nativeBalance?.price_per_sol || 0, 
+                totalPrice: nativeBalance?.total_price || 0,
+            },
+        };
+
+        for (const heliusAsset of heliusAssets) {
+            if (heliusAsset.interface != Interface.FUNGIBLE_TOKEN && heliusAsset.interface != Interface.FUNGIBLE_ASSET) { continue; }
+            if (!heliusAsset.token_info || !heliusAsset.token_info?.symbol) { continue; }
+            if (heliusAsset.compression?.compressed) { continue; }
+
+            const decimals = heliusAsset.token_info?.decimals || 0;
+            const amount = heliusAsset.token_info?.balance || 0;
+            const uiAmount = amount / 10**decimals;
+            const logo = heliusAsset.content?.files?.find(file => file.mime == 'image/png' || file.mime == 'image/jpg' || file.mime == 'image/jpeg')?.uri;
+            const symbol = heliusAsset.token_info.symbol.trim();
+            const name = heliusAsset.content?.metadata?.name ? heliusAsset.content?.metadata?.name.trim() : symbol;
+
+            const pricePerToken = heliusAsset.token_info?.price_info?.price_per_token || 0;
+            const totalPrice = heliusAsset.token_info?.price_info?.total_price || 0;
+
             const asset: Asset = {
-                address: kSolAddress,
-                amount: nativeBalance.lamports,
-                uiAmount: nativeBalance.lamports / web3.LAMPORTS_PER_SOL,
-                decimals: 9,
-                symbol: 'SOL',
-                name: 'Solana',
-                logo: 'https://light.dangervalley.com/static/sol.png',
-                priceInfo: { 
-                    pricePerToken: nativeBalance.price_per_sol, 
-                    totalPrice: nativeBalance.total_price,
-                },
+                address: heliusAsset.id,
+                amount: amount,
+                uiAmount: uiAmount,
+                decimals: decimals,
+                symbol: symbol,
+                name: name,
+                description: heliusAsset.content?.metadata?.description,
+                logo: logo,
+                supply: (heliusAsset.token_info?.supply || 0) / 10**decimals,
+                priceInfo: heliusAsset.token_info?.price_info ? { pricePerToken, totalPrice } : undefined,
+                // mintAuthority: heliusAsset.token_info?.mint_authority,
+                // freezeAuthority: heliusAsset.freezeAuthority,
             };
+
             assets.push(asset);
         }
 
+        console.log('!assets.length:', assets.length);
+
         for (const asset of assets) {
             if (asset.priceInfo){
-                asset.priceInfo.totalPrice = Math.round(100 * asset.priceInfo.totalPrice) / 100;
+                asset.priceInfo.totalPrice = Math.round(1000000 * asset.priceInfo.totalPrice) / 1000000;
             }
         }
 
         // sort by priceInfo.totalPrice
         assets.sort((a, b) => (b.priceInfo?.totalPrice || 0) - (a.priceInfo?.totalPrice || 0));
 
-        return { assets };
+        return { sol, assets };
     }
 
     static createBurnSplAccountInstruction(tokenAta: web3.PublicKey, destination: web3.PublicKey, authority: web3.PublicKey): web3.TransactionInstruction {

@@ -10,7 +10,7 @@ import { NotFoundError } from './errors/NotFoundError';
 import { errorHandler } from './middlewares/ErrorHandler';
 
 import { MigrationManager } from './services/MigrationManager';
-import { authRouter } from './routes/v1/Auth';
+import { searchRouter } from './routes/v1/Search';
 import { AccessToken } from './models/AccessToken';
 
 const corsOptions: CorsOptions = {
@@ -34,7 +34,7 @@ declare global {
 }
 
 if (process.env.API_ENABLED == 'true') {
-    app.use(authRouter);
+    app.use(searchRouter);
 }
 
 app.all('*', async () => {
@@ -45,8 +45,8 @@ app.use(errorHandler);
 
 const start = async () => {
     console.log('Start');
-    await mongoose.connect(process.env.MONGODB_CONNECTION_URL!);
-    console.log('Connected to mongo');
+    // await mongoose.connect(process.env.MONGODB_CONNECTION_URL!);
+    // console.log('Connected to mongo');
 
     const port = process.env.PORT;
     app.listen(port, () => {
