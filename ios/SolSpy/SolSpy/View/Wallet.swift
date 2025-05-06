@@ -63,6 +63,7 @@ struct Wallet: View {
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 20)
                     
                     //Account Balance
                     ZStack {
@@ -88,8 +89,8 @@ struct Wallet: View {
                                             .foregroundStyle(.white)
                                             .font(.subheadline)
                                     }
+                                    .frame(width: 160, alignment: .leading)
                                     
-                                    Spacer()
                                     
                                     VStack(alignment: .leading) {
                                         Text("Token Balance")
@@ -99,6 +100,7 @@ struct Wallet: View {
                                             .foregroundStyle(.white)
                                             .font(.subheadline)
                                     }
+                                    .frame(width: 160, alignment: .leading)
                                 }
                                 
                                 HStack {
