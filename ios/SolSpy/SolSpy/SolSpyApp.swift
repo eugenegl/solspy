@@ -11,7 +11,7 @@ import SwiftUI
 struct SolSpyApp: App {
     var body: some Scene {
         WindowGroup {
-            TransactionDetails()
+            ContentView()
                 .preferredColorScheme(.dark)
         }
     }

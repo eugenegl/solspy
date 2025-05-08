@@ -227,38 +227,230 @@ struct TransactionDetails: View {
                     
                     //Transaction Actions
                     VStack(spacing: 10) {
-                        HStack() {
-                            Text("Transaction Actions")
-                                .font(.system(size: 20, weight: .regular, design: .default))
+                        
+                        Text("Transaction Actions")
+                            .font(.system(size: 20, weight: .regular, design: .default))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, 10)
+                        
+                        
+                        //Transaction Actions base info
+                        VStack(spacing: 20) {
+                            VStack(alignment: .leading) {
+                                Text("Fee")
+                                    .foregroundStyle(Color.gray)
+                                    .font(.subheadline)
+
+                                HStack {
+                                    Text("0.00026")
+                                        .foregroundStyle(.white)
+                                        .font(.subheadline)
+                                    Image(systemName: "dollarsign.circle.fill")
+                                        .foregroundStyle(.white)
+                                    Text("SOL")
+                                        .foregroundStyle(.white)
+                                        .font(.subheadline)
+                                    Text("($0.001266)")
+                                        .foregroundStyle(.gray)
+                                        .font(.subheadline)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            
+                            VStack(alignment: .leading) {
+                                Text("Compute Units Consumed")
+                                    .foregroundStyle(Color.gray)
+                                    .font(.subheadline)
+
+                                HStack {
+                                    Text("900")
+                                        .foregroundStyle(.white)
+                                        .font(.subheadline)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            
+                            VStack(alignment: .leading) {
+                                Text("Transaction Version")
+                                    .foregroundStyle(Color.gray)
+                                    .font(.subheadline)
+
+                                HStack {
+                                    Text("Legacy")
+                                        .foregroundStyle(.white)
+                                        .font(.subheadline)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            
+                            VStack(alignment: .leading) {
+                                Text("Previous Block Hash")
+                                    .foregroundStyle(Color.gray)
+                                    .font(.subheadline)
+
+                                HStack {
+                                    Text("2n9ad...m39Sf")
+                                        .foregroundStyle(.white)
+                                        .font(.subheadline)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            
+                        }
+                        .padding(10)
+                        .clipped()
+                        .cornerRadius(15)
+                        .background(Color.white.opacity(0.02))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 15)
+                                .stroke(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 0.5
+                                )
+                        )
+                        
+                        //Interact with instruction
+                        VStack(spacing: 20) {
+                            VStack(alignment: .leading, spacing: 20) {
+                                VStack(alignment: .leading) {
+                                    Text("Interact with instruction TRANSFER on")
+                                        .foregroundStyle(Color.gray)
+                                        .font(.caption)
+                                    HStack {
+                                        ZStack {
+                                            Image(systemName: "")
+                                                .foregroundStyle(Color(red: 0.247, green: 0.918, blue: 0.286))
+                                                .font(.system(size: 12))
+                                            Circle()
+                                                .foregroundStyle(Color.white.opacity(0.1))
+                                                .frame(width: 20, height: 20)
+                                        }
+                                        Text("System Program")
+                                            .foregroundStyle(.white)
+                                            .font(.subheadline)
+                                        Image(systemName: "document.on.document")
+                                            .foregroundStyle(.white.opacity(0.5))
+                                            .font(.system(size: 12))
+                                    }
+                                    
+                                }
+                                
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        Text("Transfer from")
+                                            .foregroundStyle(Color.gray)
+                                            .font(.caption)
+                                        Text("4UqZh...pvDVS")
+                                            .foregroundStyle(.white)
+                                            .font(.subheadline)
+                                    }
+                                    .frame(width: 160, alignment: .leading)
+                                    
+                                    VStack(alignment: .leading) {
+                                        Text("to")
+                                            .foregroundStyle(Color.gray)
+                                            .font(.caption)
+                                        Text("2n9ad...m39Sf")
+                                            .foregroundStyle(.white)
+                                            .font(.subheadline)
+                                    }
+                                    .frame(width: 160, alignment: .leading)
+                                    
+                                }
+                                
+                                HStack {
+                                    Text("for")
+                                        .foregroundStyle(.white)
+                                        .font(.subheadline)
+                                    Text("0.00001")
+                                        .foregroundStyle(.white)
+                                        .font(.subheadline)
+                                    Image(systemName: "dollarsign.circle.fill")
+                                        .foregroundStyle(.white)
+                                    Text("SOL")
+                                        .foregroundStyle(.white)
+                                        .font(.subheadline)
+                                    Text("($0.001266)")
+                                        .foregroundStyle(.gray)
+                                        .font(.subheadline)
+                                }
+                                
+                            }
+                            .padding(10)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, 10)
+                        .clipped()
+                        .cornerRadius(15)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 15)
+                                .stroke(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 0.5
+                                )
+                        )
                         
-                        //Transaction card Transfer - example
-                        VStack {
+                        //Interact with instruction
+                        VStack(spacing: 20) {
                             VStack(alignment: .leading, spacing: 20) {
-                                HStack {
-                                    Text("Transfer")
-                                        .foregroundStyle(Color.white)
-                                        .font(.subheadline)
-                                    Spacer()
-                                    Image(systemName: "dollarsign.circle.fill")
-                                        .foregroundStyle(.white)
-                                    Image(systemName: "dollarsign.circle.fill")
-                                        .foregroundStyle(.white)
-                                }
-                                
-                                HStack {
-                                    ZStack {
-                                        Image(systemName: "plus")
-                                            .foregroundStyle(Color(red: 0.247, green: 0.918, blue: 0.286))
+                                VStack(alignment: .leading) {
+                                    Text("Interact with instruction TRANSFER on")
+                                        .foregroundStyle(Color.gray)
+                                        .font(.caption)
+                                    HStack {
+                                        ZStack {
+                                            Image(systemName: "")
+                                                .foregroundStyle(Color(red: 0.247, green: 0.918, blue: 0.286))
+                                                .font(.system(size: 12))
+                                            Circle()
+                                                .foregroundStyle(Color.white.opacity(0.1))
+                                                .frame(width: 20, height: 20)
+                                        }
+                                        Text("System Program")
+                                            .foregroundStyle(.white)
+                                            .font(.subheadline)
+                                        Image(systemName: "document.on.document")
+                                            .foregroundStyle(.white.opacity(0.5))
                                             .font(.system(size: 12))
-                                        Circle()
-                                            .foregroundStyle(Color(red: 0.247, green: 0.918, blue: 0.286).opacity(0.1))
-                                            .frame(width: 20, height: 20)
                                     }
                                     
-                                    Text("0.00026")
+                                }
+                                
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        Text("Transfer from")
+                                            .foregroundStyle(Color.gray)
+                                            .font(.caption)
+                                        Text("4UqZh...pvDVS")
+                                            .foregroundStyle(.white)
+                                            .font(.subheadline)
+                                    }
+                                    .frame(width: 160, alignment: .leading)
+                                    
+                                    VStack(alignment: .leading) {
+                                        Text("to")
+                                            .foregroundStyle(Color.gray)
+                                            .font(.caption)
+                                        Text("2n9ad...m39Sf")
+                                            .foregroundStyle(.white)
+                                            .font(.subheadline)
+                                    }
+                                    .frame(width: 160, alignment: .leading)
+                                    
+                                }
+                                
+                                HStack {
+                                    Text("for")
+                                        .foregroundStyle(.white)
+                                        .font(.subheadline)
+                                    Text("0.00001")
                                         .foregroundStyle(.white)
                                         .font(.subheadline)
                                     Image(systemName: "dollarsign.circle.fill")
@@ -266,28 +458,15 @@ struct TransactionDetails: View {
                                     Text("SOL")
                                         .foregroundStyle(.white)
                                         .font(.subheadline)
-                                }
-                                
-                                HStack {
-                                    Text("2 days ago")
-                                        .foregroundStyle(Color.gray)
-                                        .font(.caption)
-                                    
-                                    Spacer()
-                                    
-                                    HStack {
-                                        Text("5KV9...Syhn")
-                                            .foregroundStyle(.white)
-                                            .font(.subheadline)
-                                        Image(systemName: "arrow.up.right")
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: 13))
-                                    }
+                                    Text("($0.001266)")
+                                        .foregroundStyle(.gray)
+                                        .font(.subheadline)
                                 }
                                 
                             }
                             .padding(10)
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .clipped()
                         .cornerRadius(15)
                         .overlay(
@@ -301,316 +480,6 @@ struct TransactionDetails: View {
                                     lineWidth: 0.5
                                 )
                         )
-                        
-                        //Transaction card Burn - example
-                        VStack {
-                            VStack(alignment: .leading, spacing: 20) {
-                                HStack {
-                                    Text("Burn")
-                                        .foregroundStyle(Color.white)
-                                        .font(.subheadline)
-                                    Spacer()
-                                    Image(systemName: "dollarsign.circle.fill")
-                                        .foregroundStyle(.white)
-                                    Image(systemName: "dollarsign.circle.fill")
-                                        .foregroundStyle(.white)
-                                }
-                                
-                                HStack {
-                                    Text("Burned")
-                                        .foregroundStyle(.white)
-                                        .font(.subheadline)
-                                    Text("0.00026")
-                                        .foregroundStyle(.white)
-                                        .font(.subheadline)
-                                    Image(systemName: "dollarsign.circle.fill")
-                                        .foregroundStyle(.white)
-                                    Text("SOL")
-                                        .foregroundStyle(.white)
-                                        .font(.subheadline)
-                                }
-                                
-                                HStack {
-                                    Text("2 days ago")
-                                        .foregroundStyle(Color.gray)
-                                        .font(.caption)
-                                    
-                                    Spacer()
-                                    
-                                    HStack {
-                                        Text("5KV9...Syhn")
-                                            .foregroundStyle(.white)
-                                            .font(.subheadline)
-                                        Image(systemName: "arrow.up.right")
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: 13))
-                                    }
-                                }
-                                
-                            }
-                            .padding(10)
-                        }
-                        .clipped()
-                        .cornerRadius(15)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 15)
-                                .stroke(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 0.5
-                                )
-                        )
-                        
-                        //Transaction card Swap - example
-                        VStack {
-                            VStack(alignment: .leading, spacing: 20) {
-                                HStack {
-                                    Text("Swap")
-                                        .foregroundStyle(Color.white)
-                                        .font(.subheadline)
-                                    Spacer()
-                                    Image(systemName: "dollarsign.circle.fill")
-                                        .foregroundStyle(.white)
-                                    Image(systemName: "dollarsign.circle.fill")
-                                        .foregroundStyle(.white)
-                                }
-                                
-                                HStack {
-                                    Text("6.94")
-                                        .foregroundStyle(.white)
-                                        .font(.subheadline)
-                                    Image(systemName: "dollarsign.circle.fill")
-                                        .foregroundStyle(.white)
-                                    Text("JUP")
-                                        .foregroundStyle(.white)
-                                        .font(.subheadline)
-                                    Image(systemName: "arrow.left.arrow.right")
-                                        .foregroundStyle(.white)
-                                        .font(.system(size: 12))
-                                    Text("0.00026")
-                                        .foregroundStyle(.white)
-                                        .font(.subheadline)
-                                    Image(systemName: "dollarsign.circle.fill")
-                                        .foregroundStyle(.white)
-                                    Text("SOL")
-                                        .foregroundStyle(.white)
-                                        .font(.subheadline)
-                                }
-                                
-                                HStack {
-                                    Text("2 days ago")
-                                        .foregroundStyle(Color.gray)
-                                        .font(.caption)
-                                    
-                                    Spacer()
-                                    
-                                    HStack {
-                                        Text("5KV9...Syhn")
-                                            .foregroundStyle(.white)
-                                            .font(.subheadline)
-                                        Image(systemName: "arrow.up.right")
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: 13))
-                                    }
-                                }
-                                
-                            }
-                            .padding(10)
-                        }
-                        .clipped()
-                        .cornerRadius(15)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 15)
-                                .stroke(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 0.5
-                                )
-                        )
-                        
-                        //Transaction card Failed - example
-                        VStack {
-                            VStack(alignment: .leading, spacing: 20) {
-                                HStack {
-                                    Text("Failed")
-                                        .foregroundStyle(Color(red: 0.894, green: 0.247, blue: 0.145))
-                                        .font(.subheadline)
-                                    Spacer()
-                                    Image(systemName: "dollarsign.circle.fill")
-                                        .foregroundStyle(.white)
-                                    Image(systemName: "dollarsign.circle.fill")
-                                        .foregroundStyle(.white)
-                                }
-                                
-                                HStack {
-                                    Text("Transaction failed")
-                                        .foregroundStyle(Color(red: 0.894, green: 0.247, blue: 0.145))
-                                        .font(.subheadline)
-                                }
-                                
-                                HStack {
-                                    Text("2 days ago")
-                                        .foregroundStyle(Color.gray)
-                                        .font(.caption)
-                                    
-                                    Spacer()
-                                    
-                                    HStack {
-                                        Text("5KV9...Syhn")
-                                            .foregroundStyle(.white)
-                                            .font(.subheadline)
-                                        Image(systemName: "arrow.up.right")
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: 13))
-                                    }
-                                }
-                                
-                            }
-                            .padding(10)
-                        }
-                        .clipped()
-                        .cornerRadius(15)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 15)
-                                .stroke(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 0.5
-                                )
-                        )
-                        
-                        //Transaction card Generic - example
-                        VStack {
-                            VStack(alignment: .leading, spacing: 20) {
-                                HStack {
-                                    Text("Generic")
-                                        .foregroundStyle(Color.white)
-                                        .font(.subheadline)
-                                    Spacer()
-                                    Image(systemName: "dollarsign.circle.fill")
-                                        .foregroundStyle(.white)
-                                    Image(systemName: "dollarsign.circle.fill")
-                                        .foregroundStyle(.white)
-                                }
-                                
-                                HStack {
-                                    Text("---")
-                                        .foregroundStyle(Color.white)
-                                        .font(.subheadline)
-                                }
-                                
-                                HStack {
-                                    Text("2 days ago")
-                                        .foregroundStyle(Color.gray)
-                                        .font(.caption)
-                                    
-                                    Spacer()
-                                    
-                                    HStack {
-                                        Text("5KV9...Syhn")
-                                            .foregroundStyle(.white)
-                                            .font(.subheadline)
-                                        Image(systemName: "arrow.up.right")
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: 13))
-                                    }
-                                }
-                                
-                            }
-                            .padding(10)
-                        }
-                        .clipped()
-                        .cornerRadius(15)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 15)
-                                .stroke(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 0.5
-                                )
-                        )
-
-                        //Transaction card Universal type - example
-                        VStack {
-                            VStack(alignment: .leading, spacing: 20) {
-                                HStack {
-                                    Text("Universal type")
-                                        .foregroundStyle(Color.white)
-                                        .font(.subheadline)
-                                    Spacer()
-                                    Image(systemName: "dollarsign.circle.fill")
-                                        .foregroundStyle(.white)
-                                    Image(systemName: "dollarsign.circle.fill")
-                                        .foregroundStyle(.white)
-                                }
-                                
-                                HStack {
-                                    ZStack {
-                                        Image(systemName: "minus")
-                                            .foregroundStyle(Color(red: 0.894, green: 0.247, blue: 0.145))
-                                            .font(.system(size: 12))
-                                        Circle()
-                                            .foregroundStyle(Color(red: 0.894, green: 0.247, blue: 0.145).opacity(0.1))
-                                            .frame(width: 20, height: 20)
-                                    }
-                                    
-                                    
-                                    Text("0.00026")
-                                        .foregroundStyle(.white)
-                                        .font(.subheadline)
-                                    Image(systemName: "dollarsign.circle.fill")
-                                        .foregroundStyle(.white)
-                                    Text("SOL")
-                                        .foregroundStyle(.white)
-                                        .font(.subheadline)
-                                }
-                                
-                                HStack {
-                                    Text("2 days ago")
-                                        .foregroundStyle(Color.gray)
-                                        .font(.caption)
-                                    
-                                    Spacer()
-                                    
-                                    HStack {
-                                        Text("5KV9...Syhn")
-                                            .foregroundStyle(.white)
-                                            .font(.subheadline)
-                                        Image(systemName: "arrow.up.right")
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: 13))
-                                    }
-                                }
-                                
-                            }
-                            .padding(10)
-                        }
-                        .clipped()
-                        .cornerRadius(15)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 15)
-                                .stroke(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 0.5
-                                )
-                        )
-                        
                         
                     }
                     .padding(.horizontal, 20)

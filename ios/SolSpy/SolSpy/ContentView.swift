@@ -8,14 +8,26 @@
 import SwiftUI
 
 struct ContentView: View {
+    
+    @State private var showSplash: Bool = false
+    
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+           
+            if showSplash {
+                Search()
+            } else {
+                Splash()
+            }
+            
         }
-        .padding()
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+                withAnimation {
+                    showSplash = true
+                }
+            }
+        }
     }
 }
 
