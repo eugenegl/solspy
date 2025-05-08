@@ -20,6 +20,7 @@ struct TransactionDetails: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showCopiedToast: Bool = false
     @State private var showShareSheet: Bool = false
+    @EnvironmentObject private var coordinator: NavigationCoordinator
     
     var transactionSignature: String? = nil
     var background: Color = Color(red: 0.027, green: 0.035, blue: 0.039)
@@ -34,7 +35,7 @@ struct TransactionDetails: View {
                     .scaleEffect(1.5)
             } else if let errorMessage = viewModel.errorMessage {
                 VStack {
-                    Text("Ошибка загрузки")
+                    Text("Loading Error")
                         .font(.headline)
                         .foregroundColor(.white)
                     Text(errorMessage)
@@ -42,7 +43,7 @@ struct TransactionDetails: View {
                         .multilineTextAlignment(.center)
                         .padding()
                     
-                    Button("Повторить") {
+                    Button("Retry") {
                         if let signature = transactionSignature {
                             viewModel.loadTransaction(signature: signature)
                         }
@@ -58,9 +59,7 @@ struct TransactionDetails: View {
                     // Скроллируемый контент
                     ScrollView(showsIndicators: false) {
                         RefreshControl(coordinateSpace: .named("transactionRefresh"), onRefresh: {
-                            if let signature = transactionSignature {
-                                viewModel.loadTransaction(signature: signature)
-                            }
+                            viewModel.refreshData()
                         })
                         
                         // Отступ сверху для Header action bar
@@ -193,7 +192,7 @@ struct TransactionDetails: View {
                 VStack {
                     Spacer()
                     
-                    Text("Ссылка скопирована")
+                    Text("Link copied")
                         .font(.system(size: 15, weight: .medium))
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
@@ -208,6 +207,28 @@ struct TransactionDetails: View {
                 }
                 .animation(.easeInOut, value: showCopiedToast)
                 .zIndex(10) // Абсолютно поверх всего интерфейса
+            }
+            
+            // Toast-уведомление для ошибок обновления
+            if viewModel.showToast {
+                VStack {
+                    Spacer()
+                    
+                    Text(viewModel.toastMessage)
+                        .font(.system(size: 15, weight: .medium))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.black.opacity(0.7))
+                                .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
+                        )
+                        .foregroundColor(.white)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .padding(.bottom, 20)
+                }
+                .animation(.easeInOut, value: viewModel.showToast)
+                .zIndex(11) // Поверх toast для копирования ссылки
             }
         }
         .foregroundStyle(.white)
@@ -842,4 +863,5 @@ struct TransferActionView: View {
 
 #Preview {
     TransactionDetails()
+        .environmentObject(NavigationCoordinator())
 }

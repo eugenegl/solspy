@@ -13,17 +13,42 @@ struct TokenDetails: Codable {
     let id: String
     let content: TokenContent?
     let authorities: [TokenAuthority]?
+    let compression: TokenCompression?
+    let grouping: [String]?
     let royalty: TokenRoyalty?
+    let creators: [TokenCreator]?
+    let ownership: TokenOwnership?
+    let supply: Double?
+    let mutable: Bool?
+    let burnt: Bool?
     let tokenInfo: TokenInfo?
 
     enum CodingKeys: String, CodingKey {
-        case interface
-        case id
-        case content
-        case authorities
-        case royalty
+        case interface, id, content, authorities, compression, grouping
+        case royalty, creators, ownership, supply, mutable, burnt
         case tokenInfo = "token_info"
     }
+}
+
+// MARK: - TokenCompression
+struct TokenCompression: Codable {
+    let eligible: Bool?
+    let compressed: Bool?
+    let dataHash: String?
+    let creatorHash: String?
+    let assetHash: String?
+    let tree: String?
+    let seq: Int?
+    let leafId: Int?
+}
+
+// MARK: - TokenOwnership
+struct TokenOwnership: Codable {
+    let frozen: Bool?
+    let delegated: Bool?
+    let delegate: String?
+    let ownershipModel: String?
+    let owner: String?
 }
 
 // MARK: - TokenContent
@@ -35,9 +60,7 @@ struct TokenContent: Codable {
 
     enum CodingKeys: String, CodingKey {
         case jsonURI = "json_uri"
-        case files
-        case metadata
-        case links
+        case files, metadata, links
     }
 }
 
@@ -62,9 +85,7 @@ struct TokenMetadata: Codable {
     let tokenStandard: String?
 
     enum CodingKeys: String, CodingKey {
-        case description
-        case name
-        case symbol
+        case description, name, symbol
         case tokenStandard = "token_standard"
     }
 }
@@ -86,29 +107,56 @@ struct TokenRoyalty: Codable {
     let target: String?
     let percent: Double?
     let basisPoints: Int?
+    let primarySaleHappened: Bool?
+    let locked: Bool?
 
     enum CodingKeys: String, CodingKey {
         case royaltyModel = "royalty_model"
-        case target
-        case percent
+        case target, percent
         case basisPoints = "basis_points"
+        case primarySaleHappened = "primary_sale_happened"
+        case locked
     }
+}
+
+// MARK: - TokenCreator
+struct TokenCreator: Codable {
+    let address: String?
+    let share: Int?
+    let verified: Bool?
 }
 
 // MARK: - TokenInfo (flattened convenient data)
 struct TokenInfo: Codable {
     let symbol: String?
-    let supply: Double?
+    let supply: String?        // всегда строка, но может приходить как число – декодим гибко
     let decimals: Int?
     let tokenProgram: String?
     let priceInfo: TokenPriceInfo?
 
     enum CodingKeys: String, CodingKey {
-        case symbol
-        case supply
-        case decimals
+        case symbol, supply, decimals
         case tokenProgram = "token_program"
         case priceInfo = "price_info"
+    }
+    // Кастомный декодер, умеющий читать строку/число для supply
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        symbol = try container.decodeIfPresent(String.self, forKey: .symbol)
+        // supply может прийти как Int/Double/String
+        if let str = try? container.decode(String.self, forKey: .supply) {
+            supply = str
+        } else if let intVal = try? container.decode(Int.self, forKey: .supply) {
+            supply = String(intVal)
+        } else if let doubleVal = try? container.decode(Double.self, forKey: .supply) {
+            // убираем возможные .0 на конце
+            supply = String(format: "%.0f", doubleVal)
+        } else {
+            supply = nil
+        }
+        decimals = try container.decodeIfPresent(Int.self, forKey: .decimals)
+        tokenProgram = try container.decodeIfPresent(String.self, forKey: .tokenProgram)
+        priceInfo = try container.decodeIfPresent(TokenPriceInfo.self, forKey: .priceInfo)
     }
 }
 
@@ -120,6 +168,19 @@ struct TokenPriceInfo: Codable {
     enum CodingKeys: String, CodingKey {
         case pricePerToken = "price_per_token"
         case currency
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        // price может быть строкой или числом, либо null
+        if let dbl = try? container.decode(Double.self, forKey: .pricePerToken) {
+            pricePerToken = dbl
+        } else if let str = try? container.decode(String.self, forKey: .pricePerToken) {
+            pricePerToken = Double(str)
+        } else {
+            pricePerToken = nil
+        }
+        currency = try container.decodeIfPresent(String.self, forKey: .currency)
     }
 }
 
@@ -151,25 +212,55 @@ extension TokenResponse {
         token.tokenInfo?.decimals ?? 0
     }
 
-    // Total supply in raw units (before decimals)
+    // Total supply in raw units (as formatted string to avoid large number issues)
+    var rawSupplyString: String {
+        token.tokenInfo?.supply ?? "0"
+    }
+    
+    // Total supply converted to Double (safely)
     var rawSupply: Double {
-        token.tokenInfo?.supply ?? 0
+        guard let supplyStr = token.tokenInfo?.supply else { return 0 }
+        // Safe conversion of string to Double
+        return Double(supplyStr) ?? 0
     }
 
-    // Supply accounting for decimals
+    // Supply accounting for decimals with safer calculation
     var uiSupply: Double {
-        guard decimals > 0 else { return rawSupply }
-        return rawSupply / pow(10, Double(decimals))
+        guard let decimalValue = token.tokenInfo?.decimals, decimalValue > 0 else { return rawSupply }
+        
+        // For large numbers it's better to use NSDecimalNumber for precision
+        if let supplyStr = token.tokenInfo?.supply,
+           let supplyDecimal = Decimal(string: supplyStr) {
+            
+            // Create divisor directly as Decimal (10^decimals)
+            let divisorDecimal = pow(Decimal(10), decimalValue)
+            
+            return (supplyDecimal / divisorDecimal).doubleValue
+        }
+        
+        // Fallback if string conversion failed
+        return rawSupply / pow(10, Double(decimalValue))
     }
 
     // Current price per token (USD)
     var pricePerToken: Double {
-        token.tokenInfo?.priceInfo?.pricePerToken ?? 0
+        // Return nil-coalesced value only if it's greater than zero
+        if let price = token.tokenInfo?.priceInfo?.pricePerToken, price > 0 {
+            return price
+        }
+        return 0
     }
 
     // Market cap (price * supply)
     var marketCap: Double {
-        pricePerToken * uiSupply
+        // Only calculate market cap if both price and supply are available
+        let price = pricePerToken
+        let supply = uiSupply
+        
+        if price > 0 && supply > 0 {
+            return price * supply
+        }
+        return 0
     }
 
     // Shortened token address (first 5 ... last 5)
@@ -185,5 +276,19 @@ extension TokenResponse {
         guard let authAddress = token.authorities?.first?.address else { return "--" }
         if authAddress.count <= 10 { return authAddress }
         return "\(authAddress.prefix(5))...\(authAddress.suffix(5))"
+    }
+    
+    // Creator address shortened
+    var creatorShort: String {
+        guard let creatorAddress = token.creators?.first?.address else { return "--" }
+        if creatorAddress.count <= 10 { return creatorAddress }
+        return "\(creatorAddress.prefix(5))...\(creatorAddress.suffix(5))"
+    }
+}
+
+// Расширение для Decimal, чтобы получить doubleValue
+extension Decimal {
+    var doubleValue: Double {
+        return NSDecimalNumber(decimal: self).doubleValue
     }
 } 

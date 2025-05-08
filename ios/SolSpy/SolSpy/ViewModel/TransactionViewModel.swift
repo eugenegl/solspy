@@ -6,23 +6,47 @@ class TransactionViewModel: ObservableObject {
     @Published var transaction: DetailedTransaction?
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var showToast: Bool = false
+    @Published var toastMessage: String = ""
     
     private var cancellables = Set<AnyCancellable>()
+    private var currentSignature: String?
     
     // Загружает транзакцию по подписи
     func loadTransaction(signature: String) {
+        currentSignature = signature
         isLoading = true
         errorMessage = nil
         
-        // В реальном приложении здесь будет API запрос
-        // Для примера используем загрузку из локального JSON
-        loadMockTransaction()
+        Task {
+            do {
+                let entity = try await SolSpyAPI.shared.search(address: signature)
+                if case .transaction(let tx) = entity {
+                    await MainActor.run {
+                        self.transaction = tx.transaction
+                        self.isLoading = false
+                    }
+                } else {
+                    // Если получили другой тип – fallback на mock
+                    await MainActor.run {
+                        self.errorMessage = "Could not find transaction"
+                        self.isLoading = false
+                    }
+                }
+            } catch {
+                // При ошибке пробуем локальный мок (для оффлайн-превью)
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                    self.isLoading = false
+                }
+            }
+        }
     }
     
     // Загружает тестовые данные из локального JSON файла
     private func loadMockTransaction() {
         guard let url = Bundle.main.url(forResource: "Transaction", withExtension: "json") else {
-            self.errorMessage = "Не удалось найти тестовый JSON файл"
+            self.errorMessage = "Could not find test JSON file"
             self.isLoading = false
             return
         }
@@ -38,7 +62,7 @@ class TransactionViewModel: ObservableObject {
             }
         } catch {
             DispatchQueue.main.async {
-                self.errorMessage = "Ошибка декодирования: \(error.localizedDescription)"
+                self.errorMessage = "Decoding error: \(error.localizedDescription)"
                 self.isLoading = false
             }
         }
@@ -48,7 +72,7 @@ class TransactionViewModel: ObservableObject {
     private func fetchTransactionFromAPI(signature: String) {
         // Построение URL запроса
         guard let url = URL(string: "https://api.example.com/transactions/\(signature)") else {
-            self.errorMessage = "Некорректный URL"
+            self.errorMessage = "Invalid URL"
             self.isLoading = false
             return
         }
@@ -61,7 +85,7 @@ class TransactionViewModel: ObservableObject {
                 self.isLoading = false
                 
                 if case .failure(let error) = completion {
-                    self.errorMessage = "Ошибка: \(error.localizedDescription)"
+                    self.errorMessage = "Error: \(error.localizedDescription)"
                 }
             } receiveValue: { response in
                 self.transaction = response.transaction
@@ -115,5 +139,39 @@ class TransactionViewModel: ObservableObject {
     // Возвращает адрес в сокращенном виде
     func shortAddress(_ address: String) -> String {
         return formatWalletAddress(address)
+    }
+    
+    // Обновляет данные транзакции
+    func refreshData() {
+        // Проверяем, есть ли сохраненная подпись
+        guard let signature = currentSignature else { return }
+        
+        Task {
+            do {
+                let entity = try await SolSpyAPI.shared.search(address: signature)
+                if case .transaction(let tx) = entity {
+                    await MainActor.run {
+                        self.transaction = tx.transaction
+                        self.errorMessage = nil
+                    }
+                }
+            } catch {
+                // При ошибке обновления показываем короткий тост вместо замены данных
+                await MainActor.run {
+                    self.showToast(message: "Failed to refresh: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    // Показывает тост сообщение
+    func showToast(message: String) {
+        toastMessage = message
+        showToast = true
+        
+        // Автоматически скрываем через 2 секунды
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            self?.showToast = false
+        }
     }
 } 

@@ -9,22 +9,24 @@ import SwiftUI
 
 struct ContentView: View {
     
-    @State private var showSplash: Bool = false
+    @State private var showSplash: Bool = true
+    @EnvironmentObject private var coordinator: NavigationCoordinator
     
     var body: some View {
         VStack {
            
             if showSplash {
-                Search()
-            } else {
                 Splash()
+            } else {
+                Search()
+                    .environmentObject(coordinator)
             }
             
         }
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
                 withAnimation {
-                    showSplash = true
+                    showSplash = false
                 }
             }
         }
@@ -33,4 +35,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environmentObject(NavigationCoordinator())
 }

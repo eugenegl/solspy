@@ -32,26 +32,94 @@ struct DetailedTransaction: Codable {
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        description = try container.decode(String.self, forKey: .description)
-        type = try container.decode(String.self, forKey: .type)
-        source = try container.decode(String.self, forKey: .source)
-        fee = try container.decode(Int.self, forKey: .fee)
-        feePayer = try container.decode(String.self, forKey: .feePayer)
-        signature = try container.decode(String.self, forKey: .signature)
-        slot = try container.decode(Int.self, forKey: .slot)
-        timestamp = try container.decode(Int.self, forKey: .timestamp)
-        tokenTransfers = try container.decode([TokenTransfer].self, forKey: .tokenTransfers)
-        nativeTransfers = try container.decode([NativeTransfer].self, forKey: .nativeTransfers)
-        accountData = try container.decode([AccountData].self, forKey: .accountData)
-        transactionError = try container.decodeIfPresent(String.self, forKey: .transactionError)
-        instructions = try container.decode([Instruction].self, forKey: .instructions)
         
-        // Попробуем декодировать events, но безопасно обработаем ошибку
+        // Обрабатываем базовые поля
         do {
-            events = try container.decode([String: String].self, forKey: .events)
+            description = try container.decode(String.self, forKey: .description)
         } catch {
-            // Если не получается, просто используем nil или пустой словарь
-            events = [:]
+            print("Error decoding description: \(error)")
+            description = "Transaction"
+        }
+        
+        do {
+            type = try container.decode(String.self, forKey: .type)
+        } catch {
+            print("Error decoding type: \(error)")
+            type = "UNKNOWN"
+        }
+        
+        do {
+            source = try container.decode(String.self, forKey: .source)
+        } catch {
+            print("Error decoding source: \(error)")
+            source = "UNKNOWN_SOURCE"
+        }
+        
+        // fee может быть в разных форматах
+        do {
+            if let feeDouble = try? container.decode(Double.self, forKey: .fee) {
+                fee = Int(feeDouble)
+            } else {
+                fee = try container.decode(Int.self, forKey: .fee)
+            }
+        } catch {
+            print("Error decoding fee: \(error)")
+            fee = 0
+        }
+        
+        do {
+            feePayer = try container.decode(String.self, forKey: .feePayer)
+        } catch {
+            print("Error decoding feePayer: \(error)")
+            feePayer = ""
+        }
+        
+        do {
+            signature = try container.decode(String.self, forKey: .signature)
+        } catch {
+            print("Error decoding signature: \(error)")
+            signature = ""
+        }
+        
+        // slot обрабатываем как Int или Double
+        do {
+            if let slotDouble = try? container.decode(Double.self, forKey: .slot) {
+                slot = Int(slotDouble)
+            } else {
+                slot = try container.decode(Int.self, forKey: .slot)
+            }
+        } catch {
+            print("Error decoding slot: \(error)")
+            slot = 0
+        }
+        
+        // timestamp может быть Int, Double или String
+        do {
+            if let timestampDouble = try? container.decode(Double.self, forKey: .timestamp) {
+                timestamp = Int(timestampDouble)
+            } else if let timestampString = try? container.decode(String.self, forKey: .timestamp),
+                      let timestampInt = Int(timestampString) {
+                timestamp = timestampInt
+            } else {
+                timestamp = try container.decode(Int.self, forKey: .timestamp)
+            }
+        } catch {
+            print("Error decoding timestamp: \(error)")
+            timestamp = Int(Date().timeIntervalSince1970)
+        }
+        
+        // Обрабатываем массивы
+        tokenTransfers = (try? container.decodeIfPresent([TokenTransfer].self, forKey: .tokenTransfers)) ?? []
+        nativeTransfers = (try? container.decodeIfPresent([NativeTransfer].self, forKey: .nativeTransfers)) ?? []
+        accountData = (try? container.decodeIfPresent([AccountData].self, forKey: .accountData)) ?? []
+        transactionError = try? container.decodeIfPresent(String.self, forKey: .transactionError)
+        instructions = (try? container.decodeIfPresent([Instruction].self, forKey: .instructions)) ?? []
+        
+        // events может быть словарем, массивом или объектом - просто попробуем декодировать
+        if let _ = try? container.decodeNil(forKey: .events) {
+            events = nil
+        } else {
+            events = (try? container.decode([String: String].self, forKey: .events)) ?? [:]
         }
     }
     
@@ -93,20 +161,109 @@ struct DetailedTransaction: Codable {
         let seconds = Int(timeInterval)
         
         if seconds < 60 {
-            return "\(seconds) сек. назад"
+            return "\(seconds) sec. ago"
         } else if seconds < 3600 {
-            return "\(seconds / 60) мин. назад"
+            return "\(seconds / 60) min. ago"
         } else if seconds < 86400 {
-            return "\(seconds / 3600) ч. назад"
+            return "\(seconds / 3600) hrs. ago"
         } else {
-            return "\(seconds / 86400) дн. назад"
+            return "\(seconds / 86400) days ago"
         }
     }
 }
 
 // MARK: - Модель TokenTransfer
 struct TokenTransfer: Codable {
-    // Поля будут добавлены по мере необходимости
+    let fromUserAccount: String?
+    let toUserAccount: String?
+    let fromTokenAccount: String?
+    let toTokenAccount: String?
+    let tokenAmount: TokenAmount?
+    let mint: String?  // Адрес токена
+    
+    // Добавляем кастомный декодер для гибкой обработки
+    enum CodingKeys: String, CodingKey {
+        case fromUserAccount, toUserAccount, fromTokenAccount, toTokenAccount, tokenAmount, mint
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        fromUserAccount = try? container.decodeIfPresent(String.self, forKey: .fromUserAccount)
+        toUserAccount = try? container.decodeIfPresent(String.self, forKey: .toUserAccount)
+        fromTokenAccount = try? container.decodeIfPresent(String.self, forKey: .fromTokenAccount)
+        toTokenAccount = try? container.decodeIfPresent(String.self, forKey: .toTokenAccount)
+        tokenAmount = try? container.decodeIfPresent(TokenAmount.self, forKey: .tokenAmount)
+        mint = try? container.decodeIfPresent(String.self, forKey: .mint)
+    }
+    
+    // Вычисляемые свойства для удобного доступа
+    var amount: Double? {
+        guard let rawAmount = tokenAmount?.uiAmount else { return nil }
+        return rawAmount
+    }
+    
+    var symbol: String? {
+        tokenAmount?.symbol
+    }
+    
+    var isIncoming: Bool? {
+        guard let to = toUserAccount, let from = fromUserAccount else { return nil }
+        return to != from
+    }
+}
+
+// MARK: - Модель TokenAmount
+struct TokenAmount: Codable {
+    let amount: String
+    let decimals: Int
+    let uiAmount: Double
+    let uiAmountString: String
+    let symbol: String?     // Может быть nil для неизвестных токенов
+    
+    // Кастомный декодер для безопасной обработки полей
+    enum CodingKeys: String, CodingKey {
+        case amount, decimals, uiAmount, uiAmountString, symbol
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // amount может быть строкой или числом
+        if let amountStr = try? container.decode(String.self, forKey: .amount) {
+            amount = amountStr
+        } else if let amountDouble = try? container.decode(Double.self, forKey: .amount) {
+            amount = String(amountDouble)
+        } else if let amountInt = try? container.decode(Int.self, forKey: .amount) {
+            amount = String(amountInt)
+        } else {
+            amount = "0"
+        }
+        
+        // decimals может быть числом или строкой
+        if let decimalsInt = try? container.decode(Int.self, forKey: .decimals) {
+            decimals = decimalsInt
+        } else if let decimalsStr = try? container.decode(String.self, forKey: .decimals),
+                  let decimalsVal = Int(decimalsStr) {
+            decimals = decimalsVal
+        } else {
+            decimals = 0
+        }
+        
+        // uiAmount может быть числом или строкой
+        if let uiAmountDouble = try? container.decode(Double.self, forKey: .uiAmount) {
+            uiAmount = uiAmountDouble
+        } else if let uiAmountStr = try? container.decode(String.self, forKey: .uiAmount),
+                  let uiAmountVal = Double(uiAmountStr) {
+            uiAmount = uiAmountVal
+        } else {
+            uiAmount = 0
+        }
+        
+        // Для uiAmountString и symbol мы просто пытаемся декодировать строку
+        uiAmountString = (try? container.decode(String.self, forKey: .uiAmountString)) ?? "0"
+        symbol = try? container.decodeIfPresent(String.self, forKey: .symbol)
+    }
 }
 
 // MARK: - Модель NativeTransfer
@@ -114,6 +271,30 @@ struct NativeTransfer: Codable {
     let fromUserAccount: String
     let toUserAccount: String
     let amount: Int
+    
+    // Добавляем кастомный декодер для гибкой обработки
+    enum CodingKeys: String, CodingKey {
+        case fromUserAccount, toUserAccount, amount
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // Пробуем прочитать аккаунты, если не удалось - используем пустые строки
+        fromUserAccount = (try? container.decode(String.self, forKey: .fromUserAccount)) ?? ""
+        toUserAccount = (try? container.decode(String.self, forKey: .toUserAccount)) ?? ""
+        
+        // amount может быть как Int, так и String или Double
+        if let amountStr = try? container.decode(String.self, forKey: .amount) {
+            amount = Int(amountStr) ?? 0
+        } else if let amountDouble = try? container.decode(Double.self, forKey: .amount) {
+            amount = Int(amountDouble)
+        } else if let amountInt = try? container.decode(Int.self, forKey: .amount) {
+            amount = amountInt
+        } else {
+            amount = 0
+        }
+    }
     
     var formattedAmount: String {
         let solAmount = Double(amount) / 1_000_000_000.0
@@ -125,7 +306,38 @@ struct NativeTransfer: Codable {
 struct AccountData: Codable {
     let account: String
     let nativeBalanceChange: Int
-    let tokenBalanceChanges: [TokenBalanceChange]
+    let tokenBalanceChanges: [TokenBalanceChange]?
+    
+    enum CodingKeys: String, CodingKey {
+        case account, nativeBalanceChange, tokenBalanceChanges
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // Безопасно декодируем account
+        account = (try? container.decode(String.self, forKey: .account)) ?? ""
+        
+        // nativeBalanceChange может быть различных типов
+        if let balanceStr = try? container.decode(String.self, forKey: .nativeBalanceChange),
+           let balanceInt = Int(balanceStr) {
+            nativeBalanceChange = balanceInt
+        } else if let balanceDouble = try? container.decode(Double.self, forKey: .nativeBalanceChange) {
+            nativeBalanceChange = Int(balanceDouble)
+        } else if let balanceInt = try? container.decode(Int.self, forKey: .nativeBalanceChange) {
+            nativeBalanceChange = balanceInt
+        } else {
+            nativeBalanceChange = 0
+        }
+        
+        // Безопасно декодируем tokenBalanceChanges с учетом возможности null, пустого массива и т.д.
+        do {
+            tokenBalanceChanges = try container.decodeIfPresent([TokenBalanceChange].self, forKey: .tokenBalanceChanges)
+        } catch {
+            print("Error decoding tokenBalanceChanges: \(error)")
+            tokenBalanceChanges = []
+        }
+    }
     
     var formattedBalanceChange: String {
         let solAmount = Double(nativeBalanceChange) / 1_000_000_000.0
@@ -135,7 +347,71 @@ struct AccountData: Codable {
 
 // MARK: - Модель TokenBalanceChange
 struct TokenBalanceChange: Codable {
-    // Поля будут добавлены по мере необходимости
+    let mint: String?
+    let tokenAccount: String?
+    let userAccount: String?
+    let rawTokenAmount: RawTokenAmount?
+    let symbol: String?
+    
+    // Кастомный декодер для безопасной обработки
+    enum CodingKeys: String, CodingKey {
+        case mint, tokenAccount, userAccount, rawTokenAmount, symbol
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // Все поля опциональные, безопасно декодируем
+        mint = try? container.decodeIfPresent(String.self, forKey: .mint)
+        tokenAccount = try? container.decodeIfPresent(String.self, forKey: .tokenAccount)
+        userAccount = try? container.decodeIfPresent(String.self, forKey: .userAccount)
+        rawTokenAmount = try? container.decodeIfPresent(RawTokenAmount.self, forKey: .rawTokenAmount)
+        symbol = try? container.decodeIfPresent(String.self, forKey: .symbol)
+    }
+}
+
+// MARK: - Модель RawTokenAmount
+struct RawTokenAmount: Codable {
+    let tokenAmount: String?
+    let decimals: Int?
+    
+    // Кастомный декодер для безопасной обработки
+    enum CodingKeys: String, CodingKey {
+        case tokenAmount, decimals
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // tokenAmount может быть строкой или числом
+        if let amountStr = try? container.decode(String.self, forKey: .tokenAmount) {
+            tokenAmount = amountStr
+        } else if let amountDouble = try? container.decode(Double.self, forKey: .tokenAmount) {
+            tokenAmount = String(amountDouble)
+        } else if let amountInt = try? container.decode(Int.self, forKey: .tokenAmount) {
+            tokenAmount = String(amountInt)
+        } else {
+            tokenAmount = nil
+        }
+        
+        // decimals может быть числом или строкой
+        if let decimalsInt = try? container.decode(Int.self, forKey: .decimals) {
+            decimals = decimalsInt
+        } else if let decimalsStr = try? container.decode(String.self, forKey: .decimals),
+                  let decimalsVal = Int(decimalsStr) {
+            decimals = decimalsVal
+        } else {
+            decimals = nil
+        }
+    }
+    
+    // Удобное свойство перевода в Double (если возможно)
+    var uiAmount: Double? {
+        guard let amountStr = tokenAmount,
+              let amountDouble = Double(amountStr),
+              let decimalsVal = decimals else { return nil }
+        return amountDouble / pow(10, Double(decimalsVal))
+    }
 }
 
 // MARK: - Модель Instruction
@@ -144,6 +420,31 @@ struct Instruction: Codable {
     let data: String
     let programId: String
     let innerInstructions: [InnerInstruction]
+    
+    // Добавляем кастомный декодер
+    enum CodingKeys: String, CodingKey {
+        case accounts, data, programId, innerInstructions
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // Безопасно декодируем accounts
+        if let accountArr = try? container.decode([String].self, forKey: .accounts) {
+            accounts = accountArr
+        } else {
+            accounts = []
+        }
+        
+        // Безопасно декодируем data
+        data = (try? container.decode(String.self, forKey: .data)) ?? ""
+        
+        // Безопасно декодируем programId
+        programId = (try? container.decode(String.self, forKey: .programId)) ?? ""
+        
+        // Безопасно декодируем innerInstructions
+        innerInstructions = (try? container.decodeIfPresent([InnerInstruction].self, forKey: .innerInstructions)) ?? []
+    }
     
     var shortProgramId: String {
         formatWalletAddress(programId)
@@ -161,7 +462,14 @@ struct Instruction: Codable {
 
 // MARK: - Модель InnerInstruction
 struct InnerInstruction: Codable {
-    // Поля будут добавлены по мере необходимости
+    // Empty implementation to allow decoding anything
+    init(from decoder: Decoder) throws {
+        // Пустая имплементация - мы пока не используем это поле
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        // Пустая имплементация - мы пока не используем это поле
+    }
 }
 
 // MARK: - Вспомогательные функции

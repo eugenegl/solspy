@@ -3,6 +3,7 @@ import SwiftUI
 struct TokenListView: View {
     @ObservedObject var viewModel: WalletViewModel
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var coordinator: NavigationCoordinator
     
     var body: some View {
         ZStack {
@@ -35,25 +36,35 @@ struct TokenListView: View {
                     VStack(spacing: 12) {
                         // SOL токен
                         if let solBalance = viewModel.walletData?.balance {
-                            TokenRowView(
-                                logo: solBalance.logo,
-                                symbol: solBalance.symbol,
-                                name: solBalance.name,
-                                amount: solBalance.uiAmount,
-                                usdValue: solBalance.priceInfo.totalPrice
-                            )
+                            Button(action: {
+                                coordinator.showToken(address: solBalance.address)
+                            }) {
+                                TokenRowView(
+                                    logo: solBalance.logo,
+                                    symbol: solBalance.symbol,
+                                    name: solBalance.name,
+                                    amount: solBalance.uiAmount,
+                                    usdValue: solBalance.priceInfo?.totalPrice ?? 0
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
                         
                         // Другие токены
                         if let assets = viewModel.walletData?.assets, !assets.isEmpty {
                             ForEach(assets, id: \.address) { asset in
-                                TokenRowView(
-                                    logo: asset.logo,
-                                    symbol: asset.symbol,
-                                    name: asset.name,
-                                    amount: asset.uiAmount,
-                                    usdValue: asset.priceInfo.totalPrice
-                                )
+                                Button(action: {
+                                    coordinator.showToken(address: asset.address)
+                                }) {
+                                    TokenRowView(
+                                        logo: asset.logo,
+                                        symbol: asset.symbol,
+                                        name: asset.name,
+                                        amount: asset.uiAmount,
+                                        usdValue: asset.priceInfo?.totalPrice ?? 0
+                                    )
+                                }
+                                .buttonStyle(.plain)
                             }
                         } else if viewModel.walletData?.balance == nil {
                             // Пустое состояние только если и SOL нет
@@ -74,7 +85,7 @@ struct TokenRowView: View {
     let symbol: String
     let name: String
     let amount: Double
-    let usdValue: Double
+    let usdValue: Double?
     
     var body: some View {
         HStack {
@@ -103,7 +114,7 @@ struct TokenRowView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white)
                 
-                Text(usdValue.formatAsCurrency())
+                Text((usdValue ?? 0).formatAsCurrency())
                     .font(.system(size: 12))
                     .foregroundColor(.gray)
             }
@@ -138,4 +149,5 @@ struct EmptyTokensView: View {
 
 #Preview {
     TokenListView(viewModel: WalletViewModel())
+        .environmentObject(NavigationCoordinator())
 } 

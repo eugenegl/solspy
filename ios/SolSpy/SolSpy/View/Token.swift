@@ -8,11 +8,15 @@
 import SwiftUI
 
 struct Token: View {
+    // Адрес токена.
+    var address: String = ""
     
     var background: Color = Color(red: 0.027, green: 0.035, blue: 0.039)
     
     // View-model для загрузки и хранения данных о токене
-    @StateObject private var viewModel = TokenViewModel()
+    @StateObject private var viewModel: TokenViewModel
+    // Координатор навигации (пока не используется, но пригодится для связи)
+    @EnvironmentObject private var coordinator: NavigationCoordinator
     
     // Sheet flags
     @State private var showSocialSheet = false
@@ -20,6 +24,11 @@ struct Token: View {
     @State private var showCreatorSheet = false
     
     @Environment(\.dismiss) private var dismiss
+    
+    init(address: String = "") {
+        self.address = address
+        _viewModel = StateObject(wrappedValue: TokenViewModel(address: address))
+    }
     
     var body: some View {
         ZStack {
@@ -399,7 +408,7 @@ struct Token: View {
             if viewModel.showCopiedToast {
                 VStack {
                     Spacer()
-                    Text("Ссылка скопирована")
+                    Text("Link copied")
                         .font(.system(size: 15, weight: .medium))
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
@@ -410,6 +419,28 @@ struct Token: View {
                 }
                 .animation(.easeInOut, value: viewModel.showCopiedToast)
                 .zIndex(10)
+            }
+
+            // Toast for refresh errors
+            if viewModel.showToast {
+                VStack {
+                    Spacer()
+                    
+                    Text(viewModel.toastMessage)
+                        .font(.system(size: 15, weight: .medium))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.black.opacity(0.7))
+                                .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
+                        )
+                        .foregroundColor(.white)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .padding(.bottom, 20)
+                }
+                .animation(.easeInOut, value: viewModel.showToast)
+                .zIndex(11) // Higher z-index than copy toast
             }
 
         }
@@ -432,4 +463,5 @@ struct Token: View {
 
 #Preview {
     Token()
+        .environmentObject(NavigationCoordinator())
 }

@@ -11,6 +11,8 @@ struct Search: View {
     @State private var isShowing: Bool = false
     @State private var searchText: String = ""
     @State private var isSearching: Bool = false
+    // Координатор навигации приходит из родительского NavigationStack
+    @EnvironmentObject private var coordinator: NavigationCoordinator
     var background: Color = Color(red: 0.027, green: 0.035, blue: 0.039)
     
     var body: some View {
@@ -92,16 +94,29 @@ struct Search: View {
     private func performSearch() {
         guard !searchText.isEmpty else { return }
         
-        // Симуляция поиска
         isSearching = true
-        
-        // Здесь должна быть реальная логика поиска
-        // Например, вызов API или поиск в локальной базе данных
-        
-        // Для демонстрации просто отключим индикатор загрузки через 2 секунды
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            isSearching = false
-            // Здесь должна быть обработка результатов поиска
+        Task {
+            do {
+                let entity = try await SolSpyAPI.shared.search(address: searchText)
+                // Прячем индикатор
+                isSearching = false
+
+                switch entity {
+                case .wallet(let wallet):
+                    coordinator.showWallet(address: wallet.address)
+                case .token(let token):
+                    coordinator.showToken(address: token.address)
+                case .transaction(let tx):
+                    coordinator.showTransaction(signature: tx.transaction.signature)
+                }
+                // Очищаем поле ввода
+                searchText = ""
+            } catch {
+                // В случае ошибки просто убираем индикатор
+                isSearching = false
+                // Можно добавить алерт/текст ошибки
+                print("Search error: \(error.localizedDescription)")
+            }
         }
     }
 }
@@ -122,4 +137,5 @@ extension View {
 
 #Preview {
     Search()
+        .environmentObject(NavigationCoordinator())
 }

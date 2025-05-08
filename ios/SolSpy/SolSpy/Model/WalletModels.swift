@@ -6,6 +6,7 @@ struct WalletResponse: Codable {
     let type: String
     let balance: TokenBalance
     let assets: [TokenAsset]
+    let transactions: [DetailedTransaction]?
 }
 
 // MARK: - TokenBalance
@@ -17,7 +18,7 @@ struct TokenBalance: Codable {
     let symbol: String
     let name: String
     let logo: String?
-    let priceInfo: PriceInfo
+    let priceInfo: PriceInfo?
 }
 
 // MARK: - TokenAsset
@@ -31,13 +32,38 @@ struct TokenAsset: Codable {
     let description: String?
     let logo: String?
     let supply: Double?
-    let priceInfo: PriceInfo
+    let priceInfo: PriceInfo?
 }
 
 // MARK: - PriceInfo
 struct PriceInfo: Codable {
-    let pricePerToken: Double
-    let totalPrice: Double
+    let pricePerToken: Double?
+    let totalPrice: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case pricePerToken, totalPrice
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        // pricePerToken может быть Double или String или null
+        if let dbl = try? container.decode(Double.self, forKey: .pricePerToken) {
+            pricePerToken = dbl
+        } else if let str = try? container.decode(String.self, forKey: .pricePerToken) {
+            pricePerToken = Double(str)
+        } else {
+            pricePerToken = nil
+        }
+
+        if let dbl = try? container.decode(Double.self, forKey: .totalPrice) {
+            totalPrice = dbl
+        } else if let str = try? container.decode(String.self, forKey: .totalPrice) {
+            totalPrice = Double(str)
+        } else {
+            totalPrice = nil
+        }
+    }
 }
 
 // MARK: - Transaction types
@@ -106,8 +132,8 @@ struct Transaction: Identifiable {
 // MARK: - Helper Extensions
 extension WalletResponse {
     var totalBalance: Double {
-        let assetsTotal = assets.map(\.priceInfo.totalPrice).reduce(0, +)
-        return balance.priceInfo.totalPrice + assetsTotal
+        let assetsTotal = assets.map { $0.priceInfo?.totalPrice ?? 0 }.reduce(0, +)
+        return (balance.priceInfo?.totalPrice ?? 0) + assetsTotal
     }
     
     var tokenCount: Int {
@@ -128,18 +154,27 @@ extension Double {
     func formatAsCurrency() -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
-        formatter.maximumFractionDigits = 2
-        formatter.minimumFractionDigits = 2
+        
+        // Выбираем количество десятичных знаков динамически
+        if self < 0.01 && self > 0 {
+            formatter.maximumFractionDigits = 6
+            formatter.minimumFractionDigits = 4
+        } else {
+            formatter.maximumFractionDigits = 2
+            formatter.minimumFractionDigits = 2
+        }
+        
         formatter.currencySymbol = "$"
         formatter.decimalSeparator = ","
         formatter.groupingSeparator = " "
         formatter.currencyDecimalSeparator = ","
         // Убедимся, что символ всегда стоит перед числом
-        formatter.positiveFormat = "$ #,##0.00"
+        formatter.positiveFormat = "$ #,##0.######"
         
         if let formattedAmount = formatter.string(from: NSNumber(value: self)) {
             return formattedAmount
         }
+        // Фоллбек
         return "$\(self)"
     }
     

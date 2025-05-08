@@ -11,11 +11,14 @@ class WalletViewModel: ObservableObject {
     // Новые свойства для уведомлений
     @Published var showShareSheet = false
     @Published var showCopiedToast = false
+    @Published var showToast: Bool = false
+    @Published var toastMessage: String = ""
     
     private var cancellables = Set<AnyCancellable>()
+    private var walletAddress: String?
     
-    init() {
-        // Загрузить данные при инициализации
+    init(address: String? = nil) {
+        self.walletAddress = address
         loadWalletData()
     }
     
@@ -24,22 +27,67 @@ class WalletViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        // В реальном приложении здесь был бы сетевой запрос к API
-        // Для демонстрации загрузим тестовые данные
-        loadMockData()
+        if let addr = walletAddress {
+            Task {
+                do {
+                    let entity = try await SolSpyAPI.shared.search(address: addr)
+                    switch entity {
+                    case .wallet(let wallet):
+                        await MainActor.run {
+                            self.walletData = wallet
+                            self.transactions = self.mapTransactions(apiTransactions: wallet.transactions ?? [], walletAddress: wallet.address)
+                            self.isLoading = false
+                        }
+                    default:
+                        await MainActor.run {
+                            self.errorMessage = "Expected wallet data, received different type."
+                            self.isLoading = false
+                        }
+                    }
+                } catch {
+                    await MainActor.run {
+                        self.errorMessage = error.localizedDescription
+                        self.isLoading = false
+                    }
+                }
+            }
+        } else {
+            // Фоллбэк на локальный мок
+            loadMockData()
+        }
     }
     
     // Обновление данных при pull-to-refresh
     func refreshData() {
-        // В реальном приложении здесь был бы повторный запрос к API
-        // Для демонстрации просто перезагрузим тестовые данные с небольшой задержкой
-        // Не показываем индикатор загрузки на весь экран при обновлении
         errorMessage = nil
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-            guard let self = self else { return }
-            
-            self.loadMockData(isRefreshing: true)
+        if let addr = walletAddress {
+            Task {
+                do {
+                    let entity = try await SolSpyAPI.shared.search(address: addr)
+                    switch entity {
+                    case .wallet(let wallet):
+                        await MainActor.run {
+                            self.walletData = wallet
+                            self.transactions = self.mapTransactions(apiTransactions: wallet.transactions ?? [], walletAddress: wallet.address)
+                        }
+                    default:
+                        await MainActor.run {
+                            self.showToast(message: "Expected wallet data, received different type")
+                        }
+                    }
+                } catch {
+                    await MainActor.run {
+                        self.showToast(message: "Failed to refresh: \(error.localizedDescription)")
+                    }
+                }
+            }
+        } else {
+            // Fallback к мок-данным, если нет адреса
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+                guard let self = self else { return }
+                self.loadMockData(isRefreshing: true)
+            }
         }
     }
     
@@ -187,7 +235,7 @@ class WalletViewModel: ObservableObject {
     // Баланс SOL в USD
     var solBalanceUSD: String {
         guard let data = walletData else { return "$0.00" }
-        return data.balance.priceInfo.totalPrice.formatAsCurrency()
+        return (data.balance.priceInfo?.totalPrice ?? 0).formatAsCurrency()
     }
     
     // Количество токенов
@@ -202,7 +250,7 @@ class WalletViewModel: ObservableObject {
     // Информация о стоимости токенов в USD
     var tokenBalanceUSD: String {
         guard let data = walletData else { return "$0.00" }
-        let totalPrice = data.assets.map(\.priceInfo.totalPrice).reduce(0, +)
+        let totalPrice = data.assets.map { $0.priceInfo?.totalPrice ?? 0 }.reduce(0, +)
         return totalPrice.formatAsCurrency()
     }
     
@@ -227,7 +275,7 @@ class WalletViewModel: ObservableObject {
         // Проверяем, есть ли USDC в списке токенов
         if let usdc = walletData?.assets.first(where: { $0.symbol == "USDC" }) {
             // Если есть, показываем актуальный баланс и эквивалент в USD
-            return "\(usdc.uiAmount.formatAsTokenAmount()) USDC (\(usdc.priceInfo.totalPrice.formatAsCurrency()))"
+            return "\(usdc.uiAmount.formatAsTokenAmount()) USDC (\((usdc.priceInfo?.totalPrice ?? 0).formatAsCurrency()))"
         }
         // Иначе используем заглушку
         return "View all tokens"
@@ -287,7 +335,7 @@ class WalletViewModel: ObservableObject {
         guard let address = walletData?.address else { return nil }
         
         // Формирование Universal Link (в реальном приложении должен быть настроен домен)
-        // например, https://solspy.app/wallet/адрес_кошелька
+        // ex. https://solspy.app/wallet/wallet_address
         let universalLink = URL(string: "https://solspy.app/wallet/\(address)")
         return universalLink
     }
@@ -302,12 +350,12 @@ class WalletViewModel: ObservableObject {
         var items: [Any] = []
         
         // Добавляем текстовое описание
-        let walletTitle = "Кошелек Solana"
+        let walletTitle = "Solana Wallet"
         items.append(walletTitle)
         
         // Добавляем сам адрес кошелька
         if let address = walletData?.address {
-            items.append("Адрес: \(address)")
+            items.append("Address: \(address)")
         }
         
         // Добавляем Deep Link или Universal Link если есть
@@ -316,5 +364,105 @@ class WalletViewModel: ObservableObject {
         }
         
         return items
+    }
+    
+    // MARK: - Mapping API → UI transactions
+    private func mapTransactions(apiTransactions: [DetailedTransaction], walletAddress: String) -> [Transaction] {
+        var result: [Transaction] = []
+        for dt in apiTransactions {
+            let date = Date(timeIntervalSince1970: TimeInterval(dt.timestamp))
+            let typeEnum: TransactionType
+            
+            // Определяем тип транзакции
+            switch dt.type.uppercased() {
+            case "TRANSFER": typeEnum = .transfer
+            case "BURN": typeEnum = .burn
+            case "SWAP": typeEnum = .swap
+            default: typeEnum = .generic
+            }
+            
+            // Проверка на ошибку транзакции
+            let isFailed = dt.transactionError != nil
+            
+            // 1. Сначала проверяем токеновые трансферы
+            if !dt.tokenTransfers.isEmpty {
+                // Берем самый первый токеновый трансфер (обычно основной)
+                let tokenTransfer = dt.tokenTransfers[0]
+                
+                // Определяем направление (входящая/исходящая)
+                var isIncoming = false
+                if let to = tokenTransfer.toUserAccount {
+                    isIncoming = to == walletAddress
+                }
+                
+                // Получаем сумму и символ токена
+                let amount = tokenTransfer.amount
+                let symbol = tokenTransfer.symbol ?? "Unknown"
+                
+                // Создаем UI транзакцию
+                let tx = Transaction(
+                    type: typeEnum,
+                    amount: amount,
+                    tokenSymbol: symbol,
+                    date: date,
+                    address: tokenTransfer.fromUserAccount ?? dt.feePayer,
+                    isIncoming: isIncoming,
+                    isFailed: isFailed
+                )
+                
+                result.append(tx)
+                continue // Переходим к следующей транзакции
+            }
+
+            // 2. Если нет токеновых, обрабатываем нативные трансферы SOL
+            var isIncoming = false
+            if let first = dt.nativeTransfers.first {
+                isIncoming = first.toUserAccount == walletAddress
+            }
+            
+            // Вычисляем сумму SOL из нативных трансферов
+            var amount: Double? = nil
+            var symbol: String? = "SOL"
+            if isIncoming {
+                let incomingLamports = dt.nativeTransfers
+                    .filter { $0.toUserAccount == walletAddress }
+                    .map { $0.amount }
+                    .reduce(0, +)
+                
+                amount = Double(incomingLamports) / 1_000_000_000.0
+            } 
+            // Для исходящей - берем самый большой исходящий перевод (не учитывая комиссию)
+            else if let outgoingTransfer = dt.nativeTransfers
+                .filter({ $0.fromUserAccount == walletAddress && $0.toUserAccount != dt.feePayer })
+                .max(by: { $0.amount < $1.amount }) {
+                
+                amount = Double(outgoingTransfer.amount) / 1_000_000_000.0
+            }
+
+            let tx = Transaction(
+                type: typeEnum,
+                amount: amount,
+                tokenSymbol: symbol,
+                date: date,
+                address: isIncoming ? dt.feePayer : dt.nativeTransfers.first?.toUserAccount ?? "",
+                isIncoming: isIncoming,
+                isFailed: isFailed
+            )
+            
+            result.append(tx)
+        }
+        // Сортируем по дате убыванию
+        return result.sorted { $0.date > $1.date }
+    }
+    
+    // Показывает тост сообщение
+    func showToast(message: String) {
+        toastMessage = message
+        showToast = true
+        
+        // Автоматически скрываем через 2 секунды
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            self?.showToast = false
+        }
     }
 } 

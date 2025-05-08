@@ -9,10 +9,14 @@ class TokenViewModel: ObservableObject {
     @Published var transactions: [Transaction] = []
     @Published var showShareSheet = false
     @Published var showCopiedToast = false
+    @Published var showToast: Bool = false
+    @Published var toastMessage: String = ""
     
     private var cancellables = Set<AnyCancellable>()
+    private var tokenAddress: String?
     
-    init() {
+    init(address: String? = nil) {
+        self.tokenAddress = address
         loadTokenData()
     }
     
@@ -21,14 +25,60 @@ class TokenViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        // Simulate network by loading local mock data
-        loadMockData()
+        if let addr = tokenAddress {
+            Task {
+                do {
+                    let entity = try await SolSpyAPI.shared.search(address: addr)
+                    if case .token(let token) = entity {
+                        await MainActor.run {
+                            self.tokenData = token
+                            self.isLoading = false
+                        }
+                    } else {
+                        await MainActor.run {
+                            self.errorMessage = "Expected token data, received different type."
+                            self.isLoading = false
+                        }
+                    }
+                } catch {
+                    await MainActor.run {
+                        self.errorMessage = error.localizedDescription
+                        self.isLoading = false
+                    }
+                }
+            }
+        } else {
+            // Fallback to mock
+            loadMockData()
+        }
     }
     
     func refreshData() {
-        errorMessage = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            self?.loadMockData()
+        if let addr = tokenAddress {
+            Task {
+                do {
+                    let entity = try await SolSpyAPI.shared.search(address: addr)
+                    if case .token(let token) = entity {
+                        await MainActor.run {
+                            self.tokenData = token
+                            self.errorMessage = nil
+                        }
+                    } else {
+                        await MainActor.run {
+                            self.showToast(message: "Expected token data, received different type")
+                        }
+                    }
+                } catch {
+                    await MainActor.run {
+                        self.showToast(message: "Failed to refresh: \(error.localizedDescription)")
+                    }
+                }
+            }
+        } else {
+            // Fallback к мок-данным, если нет адреса
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                self?.loadMockData()
+            }
         }
     }
     
@@ -135,18 +185,42 @@ class TokenViewModel: ObservableObject {
     }
     
     var priceFormatted: String {
-        guard let price = tokenData?.pricePerToken else { return "--" }
-        return price.formatAsCurrency()
+        // Direct access to raw price data
+        if let priceInfo = tokenData?.token.tokenInfo?.priceInfo,
+           let price = priceInfo.pricePerToken,
+           price > 0 {
+            return price.formatAsCurrency()
+        }
+        return "--"
     }
     
     var marketCapFormatted: String {
-        guard let data = tokenData else { return "--" }
-        return data.marketCap.formatAsCurrency()
+        // Calculate market cap directly
+        if let priceInfo = tokenData?.token.tokenInfo?.priceInfo,
+           let price = priceInfo.pricePerToken,
+           let supplyStr = tokenData?.token.tokenInfo?.supply,
+           let decimals = tokenData?.token.tokenInfo?.decimals,
+           let supplyValue = Double(supplyStr),
+           price > 0, supplyValue > 0 {
+            
+            let adjustedSupply = supplyValue / pow(10, Double(decimals))
+            let marketCap = price * adjustedSupply
+            return marketCap.formatAsCurrency()
+        }
+        return "--"
     }
     
     var currentSupplyFormatted: String {
-        guard let data = tokenData else { return "--" }
-        return data.uiSupply.formatAsTokenAmount()
+        // Calculate adjusted supply directly
+        if let supplyStr = tokenData?.token.tokenInfo?.supply,
+           let decimals = tokenData?.token.tokenInfo?.decimals,
+           let supplyValue = Double(supplyStr),
+           supplyValue > 0 {
+            
+            let adjustedSupply = supplyValue / pow(10, Double(decimals))
+            return adjustedSupply.formatAsTokenAmount()
+        }
+        return "--"
     }
     
     var decimalsFormatted: String {
@@ -205,5 +279,16 @@ class TokenViewModel: ObservableObject {
             }
         }
         return items
+    }
+    
+    // Показывает тост сообщение
+    func showToast(message: String) {
+        toastMessage = message
+        showToast = true
+        
+        // Автоматически скрываем через 2 секунды
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            self?.showToast = false
+        }
     }
 } 

@@ -9,11 +9,20 @@ import SwiftUI
 import Combine
 
 struct Wallet: View {
+    // Адрес кошелька, который нужно отобразить. Пока не используется во viewModel, но пригодится при подключении API.
+    var address: String = ""
     
-    @StateObject private var viewModel = WalletViewModel()
+    @StateObject private var viewModel: WalletViewModel
     var background: Color = Color(red: 0.027, green: 0.035, blue: 0.039)
     @State private var showingTokenList = false
     @Environment(\.dismiss) private var dismiss
+    // Координатор для переходов к токенам/транзакциям
+    @EnvironmentObject private var coordinator: NavigationCoordinator
+    
+    init(address: String = "") {
+        self.address = address
+        _viewModel = StateObject(wrappedValue: WalletViewModel(address: address))
+    }
     
     var body: some View {
         ZStack {
@@ -309,7 +318,7 @@ struct Wallet: View {
                 VStack {
                     Spacer()
                     
-                    Text("Ссылка скопирована")
+                    Text("Link copied")
                         .font(.system(size: 15, weight: .medium))
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
@@ -324,6 +333,28 @@ struct Wallet: View {
                 }
                 .animation(.easeInOut, value: viewModel.showCopiedToast)
                 .zIndex(10) // Абсолютно поверх всего интерфейса
+            }
+            
+            // Toast уведомление об ошибках обновления
+            if viewModel.showToast {
+                VStack {
+                    Spacer()
+                    
+                    Text(viewModel.toastMessage)
+                        .font(.system(size: 15, weight: .medium))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.black.opacity(0.7))
+                                .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
+                        )
+                        .foregroundColor(.white)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .padding(.bottom, 20)
+                }
+                .animation(.easeInOut, value: viewModel.showToast)
+                .zIndex(11) // Поверх всего интерфейса, включая другие тосты
             }
         }
         .foregroundStyle(.white)
@@ -534,6 +565,7 @@ struct Wallet_Previews: PreviewProvider {
     static var previews: some View {
         Wallet()
             .preferredColorScheme(.dark)
+            .environmentObject(NavigationCoordinator())
     }
 }
 
