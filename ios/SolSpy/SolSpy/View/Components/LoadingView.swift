@@ -24,7 +24,6 @@ struct LoadingView: View {
             }
         }
         .padding(30)
-        .background(Color.black.opacity(0.3))
         .cornerRadius(15)
         .onAppear {
             isAnimating = true

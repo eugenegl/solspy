@@ -93,7 +93,7 @@ struct Wallet: View {
                                             
                                             Text(viewModel.totalBalanceUSD)
                                                 .foregroundStyle(.white)
-                                                .font(.system(size: 36, weight: .semibold))
+                                                .font(.system(size: 36, weight: .regular))
                                         }
                                         
                                         // Проверка на нулевой баланс
@@ -148,7 +148,7 @@ struct Wallet: View {
                                                         .foregroundStyle(.white)
                                                         .font(.system(size: 16))
                                                     Spacer()
-                                                    Image(systemName: "chevron.right")
+                                                    Image(systemName: "plus")
                                                         .foregroundStyle(.white.opacity(0.5))
                                                         .font(.system(size: 12))
                                                 }
@@ -538,86 +538,15 @@ struct Wallet_Previews: PreviewProvider {
 }
 
 // Компонент для отображения системного ShareSheet
-struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
-    
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
-        return controller
-    }
-    
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}
+#if false
+struct ShareSheet: UIViewControllerRepresentable { /* duplicate */ }
+#endif
 
 /// Кастомный RefreshControl
-struct RefreshControl: View {
-    var coordinateSpace: CoordinateSpace
-    var onRefresh: () -> Void
-    
-    @State private var isRefreshing = false
-    @State private var offset: CGFloat = 0
-    
-    private let refreshThreshold: CGFloat = 80
-    
-    var body: some View {
-        GeometryReader { geo in
-            // ------- ОСНОВНОЕ ВИЗУАЛЬНОЕ СОДЕРЖИМОЕ -----------
-            HStack {
-                Spacer()
-                VStack {
-                    if isRefreshing {
-                        PulseAnimation()
-                            .frame(width: 30, height: 30)
-                    } else if offset > 0 {
-                        Image(systemName: "arrow.down")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                            .rotationEffect(
-                                .degrees(
-                                    Double(min(offset / refreshThreshold, 1) * 180) // <- Angle принимает Double
-                                )
-                            )
-                            .opacity(Double(min(offset / 40, 1)))
-                    }
-                }
-                .frame(height: 40)
-                Spacer()
-            }
-            .offset(y: -40 + max(0, offset))
-            .onAppear { offset = 0 }
-            // ---------- ТРИГГЕРИМ ОБНОВЛЕНИЕ -----------
-            .onChange(of: offset) { newValue in
-                guard newValue > refreshThreshold, !isRefreshing else { return }
-                isRefreshing = true
-                onRefresh()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    withAnimation { isRefreshing = false }
-                }
-            }
-        }
-        .frame(height: 0)
-        // ---------- СЛЕДИМ ЗА СКРОЛЛОМ -----------
-        .background(
-            GeometryReader { geo in
-                Color.clear
-                    .preference(
-                        key: ScrollOffsetPreferenceKey.self,
-                        value: geo.frame(in: coordinateSpace).minY
-                    )
-            }
-        )
-        .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
-            offset = max(0, value)
-        }
-    }
-}
-
-struct ScrollOffsetPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
-    }
-}
+#if false
+struct RefreshControl: View { /* duplicate */ }
+struct ScrollOffsetPreferenceKey: PreferenceKey { static var defaultValue: CGFloat = 0; static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() } }
+#endif
 
 // Компонент для отображения пустых состояний
 struct EmptyStateView: View {
