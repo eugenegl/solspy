@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SocialChannelsSheet: View {
-    let website: String?
+    let channels: [String]
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -31,25 +31,29 @@ struct SocialChannelsSheet: View {
                 // Содержимое
                 ScrollView {
                     VStack(spacing: 12) {
-                        if let site = website, let url = URL(string: site.hasPrefix("http") ? site : "https://" + site) {
-                            Link(destination: url) {
-                                HStack {
-                                    Image(systemName: "globe")
-                                        .foregroundColor(.white.opacity(0.7))
-                                    
-                                    Text(site)
-                                        .foregroundColor(.white)
-                                    
-                                    Spacer()
-                                    
-                                    Image(systemName: "arrow.up.right")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.white.opacity(0.7))
+                        if !channels.isEmpty {
+                            ForEach(channels, id: \.self) { channel in
+                                if let url = URL(string: channel.hasPrefix("http") ? channel : "https://" + channel) {
+                                    Link(destination: url) {
+                                        HStack {
+                                            Image(systemName: "globe")
+                                                .foregroundColor(.white.opacity(0.7))
+                                            
+                                            Text(channel)
+                                                .foregroundColor(.white)
+                                            
+                                            Spacer()
+                                            
+                                            Image(systemName: "arrow.up.right")
+                                                .font(.system(size: 14))
+                                                .foregroundColor(.white.opacity(0.7))
+                                        }
+                                        .padding(.vertical, 14)
+                                        .padding(.horizontal, 16)
+                                        .background(Color.white.opacity(0.05))
+                                        .cornerRadius(12)
+                                    }
                                 }
-                                .padding(.vertical, 14)
-                                .padding(.horizontal, 16)
-                                .background(Color.white.opacity(0.05))
-                                .cornerRadius(12)
                             }
                         } else {
                             HStack {
@@ -211,7 +215,7 @@ struct CreatorSheet: View {
 
 #Preview {
     Group {
-        SocialChannelsSheet(website: "jup.ag")
+        SocialChannelsSheet(channels: ["jup.ag", "twitter.com/jup.ag"])
         CreatorSheet(creators: ["5KV9Z32iNZoDLSzBg8xzBB7JkvKUgvjSyhn", "9AhKqLR67hwapvG8SA2JFXaCshXc9nALJjpKaHZrsbkw"])
             .previewDisplayName("Creators")
         AuthoritySheet(authorityAddress: "9AhKqLR67hwapvG8SA2JFXaCshXc9nALJjpKaHZrsbkw")

@@ -103,10 +103,26 @@ class WalletViewModel: ObservableObject {
             if let data = jsonData {
                 do {
                     let decoder = JSONDecoder()
+                    decoder.keyDecodingStrategy = .convertFromSnakeCase
                     self.walletData = try decoder.decode(WalletResponse.self, from: data)
                     self.generateMockTransactions()
                 } catch {
                     self.errorMessage = "Failed to decode wallet data: \(error.localizedDescription)"
+                    print("Decoding error details: \(error)")
+                    if let decodingError = error as? DecodingError {
+                        switch decodingError {
+                        case .keyNotFound(let key, let context):
+                            print("Key '\(key)' not found: \(context.debugDescription)")
+                        case .typeMismatch(let type, let context):
+                            print("Type '\(type)' mismatch: \(context.debugDescription)")
+                        case .valueNotFound(let type, let context):
+                            print("Value '\(type)' not found: \(context.debugDescription)")
+                        case .dataCorrupted(let context):
+                            print("Data corrupted: \(context.debugDescription)")
+                        @unknown default:
+                            print("Unknown decoding error: \(decodingError)")
+                        }
+                    }
                 }
             }
             

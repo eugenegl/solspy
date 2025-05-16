@@ -3,7 +3,7 @@ import Foundation
 // MARK: - Основная модель транзакции
 struct TransactionResponse: Codable {
     let address: String
-    let type: String
+    let type: EntityType
     let transaction: DetailedTransaction
 }
 
@@ -42,7 +42,9 @@ struct DetailedTransaction: Codable {
         }
         
         do {
-            type = try container.decode(String.self, forKey: .type)
+            // type может быть в разных форматах и регистрах
+            let rawType = try container.decode(String.self, forKey: .type)
+            type = rawType
         } catch {
             print("Error decoding type: \(error)")
             type = "UNKNOWN"

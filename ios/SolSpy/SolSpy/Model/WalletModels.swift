@@ -3,7 +3,7 @@ import Foundation
 // MARK: - Wallet
 struct WalletResponse: Codable {
     let address: String
-    let type: String
+    let type: EntityType
     let balance: TokenBalance
     let assets: [TokenAsset]
     let transactions: [DetailedTransaction]?

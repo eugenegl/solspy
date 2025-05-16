@@ -56,277 +56,11 @@ struct Token: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 20)
                     
-                    //Market Overview
-                    ZStack {
-                        
-                        VStack {
-                            VStack(alignment: .leading, spacing: 20) {
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text("Market Overview")
-                                        .foregroundStyle(Color.white)
-                                        .font(.subheadline)
-                                }
-                                
-                                HStack {
-                                    VStack(alignment: .leading) {
-                                        Text("Price")
-                                            .foregroundStyle(Color.gray)
-                                            .font(.caption)
-                                        Text(viewModel.priceFormatted)
-                                            .foregroundStyle(.white)
-                                            .font(.subheadline)
-                                    }
-                                    .frame(width: 160, alignment: .leading)
-                                    
-                                    VStack(alignment: .leading) {
-                                        Text("Holders")
-                                            .foregroundStyle(Color.gray)
-                                            .font(.caption)
-                                        Text("983,945")
-                                            .foregroundStyle(.white)
-                                            .font(.subheadline)
-                                    }
-                                    .frame(width: 160, alignment: .leading)
-                                    
-                                }
-                                
-                                HStack {
-                                    VStack(alignment: .leading) {
-                                        Text("Market Cup")
-                                            .foregroundStyle(Color.gray)
-                                            .font(.caption)
-                                        Text(viewModel.marketCapFormatted)
-                                            .foregroundStyle(.white)
-                                            .font(.subheadline)
-                                    }
-                                    .frame(width: 160, alignment: .leading)
-                                    
-                                    VStack(alignment: .leading) {
-                                        Text("Current Supply")
-                                            .foregroundStyle(Color.gray)
-                                            .font(.caption)
-                                        Text(viewModel.currentSupplyFormatted)
-                                            .foregroundStyle(.white)
-                                            .font(.subheadline)
-                                    }
-                                    .frame(width: 160, alignment: .leading)
-                                }
-                                
-                                VStack(alignment: .leading) {
-                                    Text("Social Channels")
-                                        .foregroundStyle(Color.gray)
-                                        .font(.caption)
-                                    Button(action: { showSocialSheet = true }) {
-                                        HStack {
-                                            Text("jup.ag")
-                                                .foregroundStyle(.white)
-                                            Spacer()
-                                            Image(systemName: "plus")
-                                                .foregroundStyle(.white.opacity(0.5))
-                                                .font(.system(size: 12))
-                                        }
-                                    }
-                                    .padding()
-                                    .background(Color.white.opacity(0.05))
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                                }
-                            }
-                            .padding(10)
-                        }
-                        .background(Color.white.opacity(0.02))
-                        
-                        Circle()
-                            .fill(Color.green.opacity(0.4))
-                            .frame(width: 150, height: 150)
-                            .blur(radius: 60)
-                            .offset(x: 150, y: -100)
-                    }
-                    .clipped()
-                    .cornerRadius(15)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 15)
-                            .stroke(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 0.5
-                            )
-                    )
+                    marketOverviewCard
                     
-                    //Profile Summary
-                    ZStack {
-                        
-                        VStack {
-                            VStack(alignment: .leading, spacing: 20) {
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text("Profile Summary")
-                                        .foregroundStyle(Color.white)
-                                        .font(.subheadline)
-                                }
-                                
-                                HStack {
-                                    VStack(alignment: .leading) {
-                                        Text("Token Name")
-                                            .foregroundStyle(Color.gray)
-                                            .font(.caption)
-                                        Text("\(viewModel.tokenName) (\(viewModel.tokenSymbol))")
-                                            .foregroundStyle(.white)
-                                            .font(.subheadline)
-                                    }
-                                    .frame(width: 160, alignment: .leading)
-                                    
-                                    Spacer()
-                                    
-                                }
-                                
-                                HStack {
-                                    VStack(alignment: .leading) {
-                                        Text("Decimals")
-                                            .foregroundStyle(Color.gray)
-                                            .font(.caption)
-                                        Text(viewModel.decimalsFormatted)
-                                            .foregroundStyle(.white)
-                                            .font(.subheadline)
-                                    }
-                                    .frame(width: 160, alignment: .leading)
-                                    
-                                    VStack(alignment: .leading) {
-                                        Text("Token Extensions")
-                                            .foregroundStyle(Color.gray)
-                                            .font(.caption)
-                                        Text("FALSE")
-                                            .foregroundStyle(Color(red: 0.894, green: 0.247, blue: 0.145))
-                                            .font(.subheadline)
-                                    }
-                                    .frame(width: 160, alignment: .leading)
-                                }
-                                
-                                VStack(alignment: .leading) {
-                                    Text("Authority")
-                                        .foregroundStyle(Color.gray)
-                                        .font(.caption)
-                                    Button(action: { showAuthoritySheet = true }) {
-                                        HStack {
-                                            Text(viewModel.authorityShort)
-                                                .foregroundStyle(.white)
-                                            Spacer()
-                                            Image(systemName: "plus")
-                                                .foregroundStyle(.white.opacity(0.5))
-                                                .font(.system(size: 12))
-                                        }
-                                    }
-                                    .padding()
-                                    .background(Color.white.opacity(0.05))
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                                }
-                                
-                                VStack(alignment: .leading) {
-                                    Text("Creator")
-                                        .foregroundStyle(Color.gray)
-                                        .font(.caption)
-                                    Button(action: { showCreatorSheet = true }) {
-                                        HStack {
-                                            Text("JUPhop...cewFbq")
-                                                .foregroundStyle(.white)
-                                            Spacer()
-                                            Image(systemName: "plus")
-                                                .foregroundStyle(.white.opacity(0.5))
-                                                .font(.system(size: 12))
-                                        }
-                                    }
-                                    .padding()
-                                    .background(Color.white.opacity(0.05))
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                                }
-                            }
-                            .padding(10)
-                        }
-                        .background(Color.white.opacity(0.02))
-                        
-                    }
-                    .clipped()
-                    .cornerRadius(15)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 15)
-                            .stroke(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 0.5
-                            )
-                    )
+                    profileSummaryCard
                     
-                    //Misc
-                    VStack {
-                        VStack(alignment: .leading, spacing: 20) {
-                            HStack {
-                                Text("Misc")
-                                    .foregroundStyle(Color.white)
-                                    .font(.subheadline)
-                                
-                                Spacer()
-                            }
-                            
-                            VStack(alignment: .leading) {
-                                Text("Token Adress")
-                                    .foregroundStyle(Color.gray)
-                                    .font(.caption)
-                                HStack {
-                                    Text(viewModel.tokenAddressShort)
-                                        .foregroundStyle(.white)
-                                        .font(.subheadline)
-                                    Image(systemName: "document.on.document")
-                                        .foregroundStyle(.white.opacity(0.5))
-                                        .font(.system(size: 12))
-                                }
-                                
-                            }
-                            
-                            VStack(alignment: .leading) {
-                                Text("Owner Program")
-                                    .foregroundStyle(Color.gray)
-                                    .font(.caption)
-                                HStack {
-                                    ZStack {
-                                        Image(systemName: "")
-                                            .foregroundStyle(Color(red: 0.247, green: 0.918, blue: 0.286))
-                                            .font(.system(size: 12))
-                                        Circle()
-                                            .foregroundStyle(Color.white.opacity(0.1))
-                                            .frame(width: 20, height: 20)
-                                    }
-                                    Text("Token Program")
-                                        .foregroundStyle(.white)
-                                        .font(.subheadline)
-                                    Image(systemName: "document.on.document")
-                                        .foregroundStyle(.white.opacity(0.5))
-                                        .font(.system(size: 12))
-                                }
-                                
-                            }
-                            
-                        }
-                        .padding(10)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .background(Color.white.opacity(0.02))
-                    .clipped()
-                    .cornerRadius(15)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 15)
-                            .stroke(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 0.5
-                            )
-                    )
+                    miscCard
                     
                     Spacer()
                 }
@@ -446,7 +180,7 @@ struct Token: View {
         }
         .foregroundStyle(.white)
         .sheet(isPresented: $showSocialSheet) {
-            SocialChannelsSheet(website: "jup.ag")
+            SocialChannelsSheet(channels: viewModel.tokenData?.socialChannels ?? [])
         }
         .sheet(isPresented: $showAuthoritySheet) {
             AuthoritySheet(authorityAddress: viewModel.fullAuthorityAddress)
@@ -458,6 +192,286 @@ struct Token: View {
             ShareSheet(items: viewModel.getShareItems())
         }
         .coordinateSpace(name: "tokenRefresh")
+    }
+}
+
+// MARK: - Sub-views extracted to help the typechecker
+private extension Token {
+    var marketOverviewCard: some View {
+        ZStack {
+            VStack {
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Market Overview")
+                            .foregroundStyle(Color.white)
+                            .font(.subheadline)
+                    }
+                    
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("Price")
+                                .foregroundStyle(Color.gray)
+                                .font(.caption)
+                            Text(viewModel.priceFormatted)
+                                .foregroundStyle(.white)
+                                .font(.subheadline)
+                        }
+                        .frame(width: 160, alignment: .leading)
+                        
+                        VStack(alignment: .leading) {
+                            Text("Holders")
+                                .foregroundStyle(Color.gray)
+                                .font(.caption)
+                            Text(viewModel.tokenData?.displayHolders ?? "--")
+                                .foregroundStyle(.white)
+                                .font(.subheadline)
+                        }
+                        .frame(width: 160, alignment: .leading)
+                    }
+                    
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("Market Cup")
+                                .foregroundStyle(Color.gray)
+                                .font(.caption)
+                            Text(viewModel.marketCapFormatted)
+                                .foregroundStyle(.white)
+                                .font(.subheadline)
+                        }
+                        .frame(width: 160, alignment: .leading)
+                        
+                        VStack(alignment: .leading) {
+                            Text("Current Supply")
+                                .foregroundStyle(Color.gray)
+                                .font(.caption)
+                            Text(viewModel.currentSupplyFormatted)
+                                .foregroundStyle(.white)
+                                .font(.subheadline)
+                        }
+                        .frame(width: 160, alignment: .leading)
+                    }
+                    
+                    VStack(alignment: .leading) {
+                        Text("Social Channels")
+                            .foregroundStyle(Color.gray)
+                            .font(.caption)
+                        Button(action: { showSocialSheet = true }) {
+                            HStack {
+                                if let social = viewModel.tokenData?.socialChannels.first {
+                                    Text(social)
+                                        .foregroundStyle(.white)
+                                } else {
+                                    Text("--")
+                                        .foregroundStyle(.white)
+                                }
+                                Spacer()
+                                Image(systemName: "plus")
+                                    .foregroundStyle(.white.opacity(0.5))
+                                    .font(.system(size: 12))
+                            }
+                        }
+                        .padding()
+                        .background(Color.white.opacity(0.05))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                }
+                .padding(10)
+            }
+            .background(Color.white.opacity(0.02))
+            
+            Circle()
+                .fill(Color.green.opacity(0.4))
+                .frame(width: 150, height: 150)
+                .blur(radius: 60)
+                .offset(x: 150, y: -100)
+        }
+        .clipped()
+        .cornerRadius(15)
+        .overlay(
+            RoundedRectangle(cornerRadius: 15)
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 0.5
+                )
+        )
+    }
+    
+    var profileSummaryCard: some View {
+        ZStack {
+            VStack {
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Profile Summary")
+                            .foregroundStyle(Color.white)
+                            .font(.subheadline)
+                    }
+                    
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("Token Name")
+                                .foregroundStyle(Color.gray)
+                                .font(.caption)
+                            Text("\(viewModel.tokenName) (\(viewModel.tokenSymbol))")
+                                .foregroundStyle(.white)
+                                .font(.subheadline)
+                        }
+                        .frame(width: 160, alignment: .leading)
+                        
+                        Spacer()
+                    }
+                    
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("Decimals")
+                                .foregroundStyle(Color.gray)
+                                .font(.caption)
+                            Text(viewModel.decimalsFormatted)
+                                .foregroundStyle(.white)
+                                .font(.subheadline)
+                        }
+                        .frame(width: 160, alignment: .leading)
+                        
+                        VStack(alignment: .leading) {
+                            Text("Token Extensions")
+                                .foregroundStyle(Color.gray)
+                                .font(.caption)
+                            if !(viewModel.tokenData?.tokenExtensions.isEmpty ?? true) {
+                                Text("TRUE")
+                                    .foregroundStyle(Color(red: 0.247, green: 0.918, blue: 0.286))
+                                    .font(.subheadline)
+                            } else {
+                                Text("FALSE")
+                                    .foregroundStyle(Color(red: 0.894, green: 0.247, blue: 0.145))
+                                    .font(.subheadline)
+                            }
+                        }
+                        .frame(width: 160, alignment: .leading)
+                    }
+                    
+                    VStack(alignment: .leading) {
+                        Text("Authority")
+                            .foregroundStyle(Color.gray)
+                            .font(.caption)
+                        Button(action: { showAuthoritySheet = true }) {
+                            HStack {
+                                Text(viewModel.authorityShort)
+                                    .foregroundStyle(.white)
+                                Spacer()
+                                Image(systemName: "plus")
+                                    .foregroundStyle(.white.opacity(0.5))
+                                    .font(.system(size: 12))
+                            }
+                        }
+                        .padding()
+                        .background(Color.white.opacity(0.05))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                    
+                    VStack(alignment: .leading) {
+                        Text("Creator")
+                            .foregroundStyle(Color.gray)
+                            .font(.caption)
+                        Button(action: { showCreatorSheet = true }) {
+                            HStack {
+                                Text(viewModel.tokenData?.creator ?? "--")
+                                    .foregroundStyle(.white)
+                                Spacer()
+                                Image(systemName: "plus")
+                                    .foregroundStyle(.white.opacity(0.5))
+                                    .font(.system(size: 12))
+                            }
+                        }
+                        .padding()
+                        .background(Color.white.opacity(0.05))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                }
+                .padding(10)
+            }
+            .background(Color.white.opacity(0.02))
+        }
+        .clipped()
+        .cornerRadius(15)
+        .overlay(
+            RoundedRectangle(cornerRadius: 15)
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 0.5
+                )
+        )
+    }
+    
+    var miscCard: some View {
+        VStack {
+            VStack(alignment: .leading, spacing: 20) {
+                HStack {
+                    Text("Misc")
+                        .foregroundStyle(Color.white)
+                        .font(.subheadline)
+                    Spacer()
+                }
+                
+                VStack(alignment: .leading) {
+                    Text("Token Adress")
+                        .foregroundStyle(Color.gray)
+                        .font(.caption)
+                    HStack {
+                        Text(viewModel.tokenAddressShort)
+                            .foregroundStyle(.white)
+                            .font(.subheadline)
+                        Image(systemName: "document.on.document")
+                            .foregroundStyle(.white.opacity(0.5))
+                            .font(.system(size: 12))
+                    }
+                }
+                
+                VStack(alignment: .leading) {
+                    Text("Owner Program")
+                        .foregroundStyle(Color.gray)
+                        .font(.caption)
+                    HStack {
+                        ZStack {
+                            Image(systemName: "")
+                                .foregroundStyle(Color(red: 0.247, green: 0.918, blue: 0.286))
+                                .font(.system(size: 12))
+                            Circle()
+                                .foregroundStyle(Color.white.opacity(0.1))
+                                .frame(width: 20, height: 20)
+                        }
+                        Text(viewModel.tokenData?.ownerProgram ?? "Token Program")
+                            .foregroundStyle(.white)
+                            .font(.subheadline)
+                        Image(systemName: "document.on.document")
+                            .foregroundStyle(.white.opacity(0.5))
+                            .font(.system(size: 12))
+                    }
+                }
+            }
+            .padding(10)
+        }
+        .frame(maxWidth: .infinity)
+        .background(Color.white.opacity(0.02))
+        .clipped()
+        .cornerRadius(15)
+        .overlay(
+            RoundedRectangle(cornerRadius: 15)
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 0.5
+                )
+        )
     }
 }
 
