@@ -52,21 +52,11 @@ struct TokenContent: Codable {
     let files: [TokenFile]?
     let metadata: TokenMetadata?
     let links: TokenLinks?
-
-    private enum CodingKeys: String, CodingKey {
-        case jsonUri  = "json_uri"
-        case files, metadata, links
-    }
 }
 struct TokenFile: Codable {
     let uri:     String?
     let cdnUri:  String?
     let mime:    String?
-
-    private enum CodingKeys: String, CodingKey {
-        case uri, mime
-        case cdnUri = "cdn_uri"
-    }
 }
 
 /// Name, symbol, description, plus optional "extensions" block with arbitrary key/values.
@@ -76,12 +66,6 @@ struct TokenMetadata: Codable {
     let symbol:       String?
     let tokenStandard:String?
     let extensions:   [String: String]?  // website, twitter, discord & other custom links
-
-    private enum CodingKeys: String, CodingKey {
-        case description, name, symbol
-        case tokenStandard = "token_standard"
-        case extensions
-    }
 }
 
 /// Dynamic container – collects every string link under `links` no matter the key.
@@ -138,14 +122,18 @@ struct TokenInfo: Codable {
         symbol       = try c.decodeIfPresent(String.self,  forKey: .symbol)
         decimals     = try c.decodeIfPresent(Int.self,     forKey: .decimals)
         tokenProgram = try c.decodeIfPresent(String.self,  forKey: .tokenProgram)
+        
         priceInfo    = try c.decodeIfPresent(TokenPriceInfo.self, forKey: .priceInfo)
+        
         holders      = try c.decodeIfPresent(Double.self,  forKey: .holders)
 
-        // supply is tricky – may be number or string
-        if let n = try? c.decodeIfPresent(Decimal.self, forKey: .supply) {
-            supply = n
-        } else if let s = try? c.decodeIfPresent(String.self, forKey: .supply) {
+        // supply is tricky – may be number or string, and can be very large
+        if let s = try? c.decodeIfPresent(String.self, forKey: .supply) {
             supply = Decimal(string: s)
+        } else if let i = try? c.decodeIfPresent(Int64.self, forKey: .supply) {
+            supply = Decimal(i)
+        } else if let n = try? c.decodeIfPresent(Double.self, forKey: .supply) {
+            supply = Decimal(n)
         } else {
             supply = nil
         }
@@ -154,10 +142,11 @@ struct TokenInfo: Codable {
 struct TokenPriceInfo: Codable {
     let pricePerToken: Double?
     let currency:      String?
-
-    private enum CodingKeys: String, CodingKey {
-        case pricePerToken = "price_per_token"
-        case currency
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        pricePerToken = try container.decodeIfPresent(Double.self, forKey: .pricePerToken)
+        currency = try container.decodeIfPresent(String.self, forKey: .currency)
     }
 }
 
@@ -211,11 +200,7 @@ extension TokenResponse {
         return p * s
     }
 
-    /// All social / external links excluding the main image link
-    var socialChannels: [String] {
-        guard let map = token.content?.links?.map else { return [] }
-        return map.compactMap { key, value in key == "image" ? nil : value }
-    }
+
 
     /// Token code symbol (e.g., JUP)
     var symbol: String {
@@ -230,12 +215,6 @@ extension TokenResponse {
     /// First authority address or "--".
     var authority: String {
         guard let addr = token.authorities?.first?.address else { return "--" }
-        return addr.abbreviated()
-    }
-
-    /// First creator address or "--".
-    var creator: String {
-        guard let addr = token.creators?.first?.address else { return "--" }
         return addr.abbreviated()
     }
 

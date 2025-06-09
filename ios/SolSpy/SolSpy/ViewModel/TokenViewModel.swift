@@ -40,10 +40,7 @@ final class TokenViewModel: ObservableObject {
                 let entity = try await SolSpyAPI.shared.search(address: addr)
                 if case .token(let token) = entity {
                     await MainActor.run {
-                        debugPrint("🔹 decoded:", token.title,
-                                   "dec:", token.token.tokenInfo?.decimals ?? token.token.decimals ?? 0,
-                                   "supply:", token.currentSupply ?? 0,
-                                   "price:", token.price ?? 0)
+                        debugPrint("🔹 Token loaded:", token.title, "price:", token.price ?? 0)
                         self.tokenData = token
                         self.isLoading = false
                     }
@@ -65,7 +62,9 @@ final class TokenViewModel: ObservableObject {
     func refreshData() { loadTokenData() }
 
     // MARK: – Mocks (коротко)
-    private func loadMockData() { isLoading = false }
+    private func loadMockData() { 
+        isLoading = false 
+    }
 
     // MARK: – UI helpers
     var tokenName: String { tokenData?.title ?? "--" }
@@ -91,9 +90,6 @@ final class TokenViewModel: ObservableObject {
 
     var fullAuthorityAddress: String {
         tokenData?.token.authorities?.first?.address ?? "--"
-    }
-    var creatorAddresses: [String] {
-        tokenData?.token.creators?.compactMap { $0.address } ?? []
     }
 
     // MARK: – Navigation & share

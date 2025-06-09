@@ -19,9 +19,7 @@ struct Token: View {
     @EnvironmentObject private var coordinator: NavigationCoordinator
     
     // Sheet flags
-    @State private var showSocialSheet = false
     @State private var showAuthoritySheet = false
-    @State private var showCreatorSheet = false
     
     @Environment(\.dismiss) private var dismiss
     
@@ -179,14 +177,8 @@ struct Token: View {
 
         }
         .foregroundStyle(.white)
-        .sheet(isPresented: $showSocialSheet) {
-            SocialChannelsSheet(channels: viewModel.tokenData?.socialChannels ?? [])
-        }
         .sheet(isPresented: $showAuthoritySheet) {
             AuthoritySheet(authorityAddress: viewModel.fullAuthorityAddress)
-        }
-        .sheet(isPresented: $showCreatorSheet) {
-            CreatorSheet(creators: viewModel.creatorAddresses)
         }
         .sheet(isPresented: $viewModel.showShareSheet) {
             ShareSheet(items: viewModel.getShareItems())
@@ -207,73 +199,38 @@ private extension Token {
                             .font(.subheadline)
                     }
                     
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Price")
-                                .foregroundStyle(Color.gray)
-                                .font(.caption)
-                            Text(viewModel.priceFormatted)
-                                .foregroundStyle(.white)
-                                .font(.subheadline)
-                        }
-                        .frame(width: 160, alignment: .leading)
-                        
-                        VStack(alignment: .leading) {
-                            Text("Holders")
-                                .foregroundStyle(Color.gray)
-                                .font(.caption)
-                            Text(viewModel.tokenData?.displayHolders ?? "--")
-                                .foregroundStyle(.white)
-                                .font(.subheadline)
-                        }
-                        .frame(width: 160, alignment: .leading)
-                    }
-                    
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Market Cup")
-                                .foregroundStyle(Color.gray)
-                                .font(.caption)
-                            Text(viewModel.marketCapFormatted)
-                                .foregroundStyle(.white)
-                                .font(.subheadline)
-                        }
-                        .frame(width: 160, alignment: .leading)
-                        
-                        VStack(alignment: .leading) {
-                            Text("Current Supply")
-                                .foregroundStyle(Color.gray)
-                                .font(.caption)
-                            Text(viewModel.currentSupplyFormatted)
-                                .foregroundStyle(.white)
-                                .font(.subheadline)
-                        }
-                        .frame(width: 160, alignment: .leading)
-                    }
-                    
-                    VStack(alignment: .leading) {
-                        Text("Social Channels")
+                    // Price занимает всю ширину
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Price")
                             .foregroundStyle(Color.gray)
                             .font(.caption)
-                        Button(action: { showSocialSheet = true }) {
-                            HStack {
-                                if let social = viewModel.tokenData?.socialChannels.first {
-                                    Text(social)
-                                        .foregroundStyle(.white)
-                                } else {
-                                    Text("--")
-                                        .foregroundStyle(.white)
-                                }
-                                Spacer()
-                                Image(systemName: "plus")
-                                    .foregroundStyle(.white.opacity(0.5))
-                                    .font(.system(size: 12))
-                            }
-                        }
-                        .padding()
-                        .background(Color.white.opacity(0.05))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        Text(viewModel.priceFormatted)
+                            .foregroundStyle(.white)
+                            .font(.subheadline)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    // Market Cap занимает всю ширину
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Market Cap")
+                            .foregroundStyle(Color.gray)
+                            .font(.caption)
+                        Text(viewModel.marketCapFormatted)
+                            .foregroundStyle(.white)
+                            .font(.subheadline)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    // Current Supply занимает всю ширину
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Current Supply")
+                            .foregroundStyle(Color.gray)
+                            .font(.caption)
+                        Text(viewModel.currentSupplyFormatted)
+                            .foregroundStyle(.white)
+                            .font(.subheadline)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(10)
             }
@@ -359,25 +316,6 @@ private extension Token {
                         Button(action: { showAuthoritySheet = true }) {
                             HStack {
                                 Text(viewModel.authorityShort)
-                                    .foregroundStyle(.white)
-                                Spacer()
-                                Image(systemName: "plus")
-                                    .foregroundStyle(.white.opacity(0.5))
-                                    .font(.system(size: 12))
-                            }
-                        }
-                        .padding()
-                        .background(Color.white.opacity(0.05))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    
-                    VStack(alignment: .leading) {
-                        Text("Creator")
-                            .foregroundStyle(Color.gray)
-                            .font(.caption)
-                        Button(action: { showCreatorSheet = true }) {
-                            HStack {
-                                Text(viewModel.tokenData?.creator ?? "--")
                                     .foregroundStyle(.white)
                                 Spacer()
                                 Image(systemName: "plus")
