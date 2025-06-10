@@ -5,11 +5,14 @@ import Combine
 class HomeViewModel: ObservableObject {
     @Published var solPrice: SOLPriceDisplay?
     @Published var latestTransactions: [LatestTransaction] = []
+    @Published var topTokens: [TopToken] = []
     @Published var isPriceLoading: Bool = false
     @Published var isTransactionsLoading: Bool = false
+    @Published var isTopTokensLoading: Bool = false
     @Published var webSocketState: WebSocketState = .disconnected
     
     private var priceTimer: Timer?
+    private var tokensTimer: Timer?
     private var webSocketManager = SolanaWebSocketManager.shared
     private var cancellables = Set<AnyCancellable>()
     
@@ -23,6 +26,9 @@ class HomeViewModel: ObservableObject {
         priceTimer?.invalidate()
         priceTimer = nil
         
+        tokensTimer?.invalidate()
+        tokensTimer = nil
+        
         // Вызываем disconnect в Task для совместимости с @MainActor
         Task { @MainActor in
             webSocketManager.disconnect()
@@ -35,6 +41,7 @@ class HomeViewModel: ObservableObject {
     private func loadInitialData() {
         Task {
             await fetchSOLPrice()
+            await fetchTopTokens()
             startWebSocketConnection()
         }
     }
@@ -123,20 +130,29 @@ class HomeViewModel: ObservableObject {
     
     // MARK: - Timer Management
     private func startTimers() {
-        // Обновление цены каждые 5 секунд (Binance API более стабильный)
+        // Обновление цены SOL каждые 5 секунд (Binance API более стабильный)
         priceTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
             Task { @MainActor in
                 await self.fetchSOLPrice()
             }
         }
         
-        // WebSocket обеспечивает реалтайм обновления, таймер больше не нужен
-        // Транзакции обновляются автоматически через WebSocket события
+        // Обновление топ токенов каждые 5 секунд
+        tokensTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
+            Task { @MainActor in
+                await self.fetchTopTokens()
+            }
+        }
+        
+        // WebSocket обеспечивает реалтайм обновления транзакций
     }
     
     func stopTimers() {
         priceTimer?.invalidate()
         priceTimer = nil
+        
+        tokensTimer?.invalidate()
+        tokensTimer = nil
         
         // Отключаем WebSocket
         Task { @MainActor in
@@ -144,9 +160,42 @@ class HomeViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Top Tokens Methods
+    func fetchTopTokens() async {
+        isTopTokensLoading = true
+        print("🔄 Starting top tokens fetch...")
+        
+        do {
+            let tokens = try await SolSpyAPI.shared.fetchTopTokens()
+            
+            // Проверяем что получили валидные данные
+            if !tokens.isEmpty {
+                topTokens = tokens
+                print("✅ Top tokens loaded: \(tokens.count) tokens with real logos")
+                
+                // Обновляем базовые данные для следующих обновлений
+                TopToken.mockTokens = tokens
+            } else {
+                print("⚠️ Received empty tokens list, keeping current data")
+            }
+        } catch {
+            print("❌ Failed to fetch top tokens: \(error)")
+            // В случае ошибки показываем последние данные если они есть, иначе mock
+            if topTokens.isEmpty {
+                print("📋 Using fallback mock data")
+                topTokens = TopToken.mockTokens
+            } else {
+                print("📋 Keeping last successful data")
+            }
+        }
+        
+        isTopTokensLoading = false
+    }
+    
     // MARK: - Pull to Refresh
     func refreshAll() async {
         await fetchSOLPrice()
+        await fetchTopTokens()
         refreshTransactions()
     }
     

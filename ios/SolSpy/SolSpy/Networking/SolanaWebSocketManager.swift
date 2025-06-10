@@ -46,7 +46,7 @@ class SolanaWebSocketManager: ObservableObject {
     
     // Throttling для ограничения частоты создания транзакций
     private var lastTransactionTime: Date = Date.distantPast
-    private let transactionInterval: TimeInterval = 5.0 // 5 секунд между транзакциями
+    private let transactionInterval: TimeInterval = 2.5 // 2.5 секунды между транзакциями
     
     // Public publisher для подписки на события
     var eventPublisher: AnyPublisher<SolanaWebSocketEvent, Never> {

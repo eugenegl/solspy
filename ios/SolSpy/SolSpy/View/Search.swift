@@ -47,21 +47,79 @@ struct Search: View {
                         )
                         .environmentObject(coordinator)
                         
-                        // Строка поиска с новым дизайном
-                        SearchInputView(
-                            searchText: $searchText,
-                            onPaste: pasteFromClipboard
+                        // Top Tokens Widget
+                        TopTokensWidget(
+                            tokens: homeViewModel.topTokens,
+                            isLoading: homeViewModel.isTopTokensLoading
                         )
+                        .environmentObject(coordinator)
                         
-                        Spacer(minLength: 100) // Пространство для кнопки
+                        // Дополнительное пространство внизу для поисковой строки
+                        Spacer(minLength: 80)
                     }
                 }
                 .refreshable {
                     await homeViewModel.refreshAll()
                 }
                 
-                // Кнопка поиска прижата к низу
-                VStack {
+                // Поисковая строка и кнопка в HStack, зафиксированы внизу
+                HStack(spacing: 12) {
+                    // Строка поиска (модифицированная версия SearchInputView)
+                    HStack(spacing: 12) {
+                        
+                        // Поле вводаи
+                        TextField("", text: $searchText)
+                            .placeholder(when: searchText.isEmpty) {
+                                Text("Search")
+                                    .font(.system(size: 15, weight: .regular))
+                                    .foregroundStyle(.white.opacity(0.4))
+                            }
+                            .font(.system(size: 15, weight: .regular))
+                            .foregroundStyle(.white)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                        
+                        // Кнопка очистки
+                        if !searchText.isEmpty {
+                            Button(action: {
+                                searchText = ""
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(.white.opacity(0.5))
+                            }
+                        }
+                        
+                        // Кнопка вставки
+                        Button(action: pasteFromClipboard) {
+                            Text("Paste")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(Color(red: 0.247, green: 0.918, blue: 0.286))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .fill(Color(red: 0.247, green: 0.918, blue: 0.286).opacity(0.15))
+                                )
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.black.opacity(0.4))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(
+                                        searchText.isEmpty ? 
+                                        Color.white.opacity(0.1) : 
+                                        Color(red: 0.247, green: 0.918, blue: 0.286).opacity(0.5),
+                                        lineWidth: 1
+                                    )
+                            )
+                    )
+                    
+                    // Кнопка поиска
                     Button(action: {
                         performSearch()
                     }) {
@@ -75,12 +133,13 @@ struct Search: View {
                                     .foregroundStyle(.black)
                             }
                         }
-                        .frame(width: 90, height: 60)
+                        .frame(width: 60, height: 60)
                         .background(Color(red: 0.247, green: 0.918, blue: 0.286))
-                        .cornerRadius(20)
+                        .cornerRadius(12)
                     }
-                    .padding(.bottom, 30)
                 }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 30)
                 .background(
                     // Градиент для плавного перехода
                     LinearGradient(
@@ -135,8 +194,6 @@ struct Search: View {
         }
     }
 }
-
-
 
 #Preview {
     Search()
