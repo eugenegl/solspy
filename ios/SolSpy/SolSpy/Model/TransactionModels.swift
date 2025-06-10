@@ -24,6 +24,27 @@ struct DetailedTransaction: Codable {
     let instructions: [Instruction]
     let events: [String: String]?  // Опциональный словарь для events
     
+    // Инициализатор для создания базовых транзакций
+    init(description: String, type: String, source: String, fee: Int, feePayer: String, 
+         signature: String, slot: Int, timestamp: Int, tokenTransfers: [TokenTransfer], 
+         nativeTransfers: [NativeTransfer], accountData: [AccountData], 
+         transactionError: String?, instructions: [Instruction], events: [String: String]?) {
+        self.description = description
+        self.type = type
+        self.source = source
+        self.fee = fee
+        self.feePayer = feePayer
+        self.signature = signature
+        self.slot = slot
+        self.timestamp = timestamp
+        self.tokenTransfers = tokenTransfers
+        self.nativeTransfers = nativeTransfers
+        self.accountData = accountData
+        self.transactionError = transactionError
+        self.instructions = instructions
+        self.events = events
+    }
+    
     // Кодирование/декодирование для поддержки пустого словаря events
     enum CodingKeys: String, CodingKey {
         case description, type, source, fee, feePayer, signature, slot, timestamp

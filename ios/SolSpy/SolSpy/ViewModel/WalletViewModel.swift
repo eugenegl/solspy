@@ -34,6 +34,13 @@ class WalletViewModel: ObservableObject {
                     switch entity {
                     case .wallet(let wallet):
                         await MainActor.run {
+                            // Логирование для отладки
+                            print("🏦 Wallet data received:")
+                            print("  - Address: \(wallet.address)")
+                            print("  - SOL Balance: \(wallet.balance.uiAmount) (\(wallet.balance.priceInfo?.totalPrice ?? 0))")
+                            print("  - Assets count: \(wallet.assets.count)")
+                            print("  - Total Balance: \(wallet.totalBalance)")
+                            
                             self.walletData = wallet
                             self.transactions = self.mapTransactions(apiTransactions: wallet.transactions ?? [], walletAddress: wallet.address)
                             self.isLoading = false
@@ -239,7 +246,7 @@ class WalletViewModel: ObservableObject {
     // Общий баланс кошелька
     var totalBalanceUSD: String {
         guard let data = walletData else { return "$0.00" }
-        return data.totalBalance.formatAsCurrency()
+        return String(format: "$%.2f", data.totalBalance)
     }
     
     // Баланс SOL

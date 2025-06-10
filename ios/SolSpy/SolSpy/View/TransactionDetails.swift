@@ -95,13 +95,27 @@ struct TransactionDetails: View {
                             .padding(.bottom, 10)
                             
                             // Выбор контента на основе выбранной вкладки
-                            switch selectedTab {
-                            case .overview:
-                                OverviewTabView(transaction: transaction, viewModel: viewModel)
-                            case .solBalanceChange:
-                                SolBalanceChangeTabView(transaction: transaction, viewModel: viewModel)
-                            case .tokenBalanceChange:
-                                TokenBalanceChangeTabView(transaction: transaction)
+                            if let transaction = viewModel.transaction {
+                                switch selectedTab {
+                                case .overview:
+                                    OverviewTabView(transaction: transaction, viewModel: viewModel)
+                                case .solBalanceChange:
+                                    SolBalanceChangeTabView(transaction: transaction, viewModel: viewModel)
+                                case .tokenBalanceChange:
+                                    TokenBalanceChangeTabView(transaction: transaction)
+                                }
+                            } else {
+                                // Показываем заглушку пока данные загружаются
+                                VStack {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .scaleEffect(1.2)
+                                    Text("Загрузка данных транзакции...")
+                                        .foregroundColor(.white.opacity(0.7))
+                                        .padding(.top, 10)
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .padding(.top, 50)
                             }
                         }
                     }
@@ -136,7 +150,7 @@ struct TransactionDetails: View {
                         HStack {
                             // Кнопка назад
                             Button(action: {
-                                dismiss()
+                                coordinator.pop()
                             }) {
                                 Image(systemName: "chevron.left")
                                     .font(.system(size: 16, weight: .semibold))

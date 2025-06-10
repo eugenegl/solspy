@@ -140,7 +140,7 @@ struct Wallet: View {
                                                             .font(.subheadline)
                                                     }
                                                 }
-                                                .frame(width: 180, alignment: .leading)
+                                                .frame(width: 220, alignment: .leading)
                                             }
                                             
                                             // USDC кнопка - теперь работает как кнопка для открытия sheet
@@ -410,10 +410,10 @@ struct TransactionCard: View {
                     
                     Spacer()
                     
-                    // Короткий формат адреса
+                    // Короткий формат signature
                     HStack {
-                        Text(formatShortAddress(transaction.address))
-                            .foregroundStyle(.white)
+                        Text(formatShortSignature(transaction.signature))
+                            .foregroundStyle(Color(red: 0.3, green: 0.7, blue: 1.0))
                             .font(.subheadline)
                         Image(systemName: "arrow.up.right")
                             .foregroundStyle(.white)
@@ -444,6 +444,14 @@ struct TransactionCard: View {
         guard address.count > 7 else { return address }
         let prefix = address.prefix(4)
         let suffix = address.suffix(4)
+        return "\(prefix)...\(suffix)"
+    }
+    
+    // Функция для формирования короткой signature
+    private func formatShortSignature(_ signature: String) -> String {
+        guard signature.count > 7 else { return signature }
+        let prefix = signature.prefix(4)
+        let suffix = signature.suffix(4)
         return "\(prefix)...\(suffix)"
     }
 }

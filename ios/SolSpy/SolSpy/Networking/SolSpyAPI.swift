@@ -54,6 +54,9 @@ final class SolSpyAPI {
         guard var comps = URLComponents(url: base.appendingPathComponent("search"), resolvingAgainstBaseURL: false) else { throw APIError.invalidURL }
         comps.queryItems = [URLQueryItem(name: "address", value: address)]
         guard let url = comps.url else { throw APIError.invalidURL }
+        
+        print("🔍 Searching for: \(address)")
+        print("🌐 API URL: \(url)")
 
         // 2. fetch
         let (data, resp): (Data, URLResponse)
@@ -72,7 +75,11 @@ final class SolSpyAPI {
         // 4. decode the full object based on `type`
         switch meta.type {
         case .WALLET:
-            return .wallet( try decoder.decode(WalletResponse.self, from: data) )
+            let wallet = try decoder.decode(WalletResponse.self, from: data)
+            print("📋 Parsed wallet: \(wallet.address)")
+            print("   SOL: \(wallet.balance.uiAmount) SOL")
+            print("   Assets: \(wallet.assets.count) tokens")
+            return .wallet(wallet)
 
         case .TRANSACTION:
             // handy log for troubleshooting – remove if noisy
