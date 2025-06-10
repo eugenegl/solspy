@@ -11,6 +11,7 @@ class TransactionViewModel: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     private var currentSignature: String?
+    private var currentSOLPrice: Double = 158.07 // Значение по умолчанию
     
     // Загружает транзакцию по подписи
     func loadTransaction(signature: String) {
@@ -153,11 +154,13 @@ class TransactionViewModel: ObservableObject {
     
     // Примерная конвертация SOL в USD
     func solToUSD(_ solAmount: Double) -> String {
-        // Обычно здесь будет запрос к API для получения актуального курса
-        // Для примера используем фиксированный курс
-        let rate = 50.0 // 1 SOL = 50 USD
-        let usdAmount = solAmount * rate
-        return String(format: "$%.6f", usdAmount)
+        let usdAmount = solAmount * currentSOLPrice
+        return String(format: "$%.2f", usdAmount)
+    }
+    
+    // Обновляет текущий курс SOL
+    func updateSOLPrice(_ price: Double) {
+        currentSOLPrice = price
     }
     
     // Возвращает адрес в сокращенном виде

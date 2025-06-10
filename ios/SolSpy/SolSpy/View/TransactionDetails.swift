@@ -249,6 +249,17 @@ struct TransactionDetails: View {
         }
         .foregroundStyle(.white)
         .onAppear {
+            // Загружаем актуальный курс SOL
+            Task {
+                do {
+                    let priceData = try await BinanceAPI.shared.fetchSOLPrice()
+                    viewModel.updateSOLPrice(priceData.price)
+                } catch {
+                    print("Failed to fetch SOL price: \(error)")
+                    // Используем курс по умолчанию
+                }
+            }
+            
             if let signature = transactionSignature {
                 viewModel.loadTransaction(signature: signature)
             } else {
@@ -578,13 +589,15 @@ struct SolBalanceCardView: View {
     let viewModel: TransactionViewModel
     
     private var balanceBefore: Double {
-        let currentBalance = Double(account.nativeBalanceChange) / 1_000_000_000.0
-        return currentBalance < 0 ? abs(currentBalance) : 0
+        // В реальном API нужен баланс до транзакции
+        // Пока показываем 0 или примерное значение
+        return 0.0 // TODO: Получить из API полную информацию о балансах
     }
     
     private var balanceAfter: Double {
-        let currentBalance = Double(account.nativeBalanceChange) / 1_000_000_000.0
-        return currentBalance > 0 ? currentBalance : 0
+        // В реальном API нужен баланс после транзакции
+        // Пока показываем 0 или примерное значение
+        return 0.0 // TODO: Получить из API полную информацию о балансах
     }
     
     private var change: Double {
@@ -596,7 +609,8 @@ struct SolBalanceCardView: View {
     }
     
     private var changeValue: String {
-        "$56.97" // Фиксированное значение для примера
+        // Используем метод из TransactionViewModel для получения актуального курса
+        return viewModel.solToUSD(abs(change))
     }
     
     private var accountTags: [String] {
@@ -673,32 +687,14 @@ struct SolBalanceCardView: View {
             // Изменение баланса
             VStack(spacing: 12) {
                 HStack {
-                    Text("Balance Before")
-                        .font(.system(size: 14))
-                        .foregroundColor(.gray)
-                    Spacer()
-                    Text(String(format: "%.9f", balanceBefore))
-                        .font(.system(size: 14))
-                }
-                
-                HStack {
-                    Text("Balance After")
-                        .font(.system(size: 14))
-                        .foregroundColor(.gray)
-                    Spacer()
-                    Text(String(format: "%.9f", balanceAfter))
-                        .font(.system(size: 14))
-                }
-                
-                HStack {
                     Text("Change (SOL)")
                         .font(.system(size: 14))
                         .foregroundColor(.gray)
                     Spacer()
                     HStack(spacing: 2) {
-                        Text(change >= 0 ? "+" : "-")
+                        Text(change >= 0 ? "+" : "")
                             .foregroundColor(changeColor)
-                        Text(String(format: "%.9f", abs(change)))
+                        Text(String(format: "%.9f", change))
                             .foregroundColor(changeColor)
                     }
                     .font(.system(size: 14, weight: .medium))
@@ -711,6 +707,7 @@ struct SolBalanceCardView: View {
                     Spacer()
                     Text(changeValue)
                         .font(.system(size: 14))
+                        .foregroundColor(changeColor)
                 }
             }
         }
