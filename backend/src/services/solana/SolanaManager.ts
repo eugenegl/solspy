@@ -322,14 +322,14 @@ export class SolanaManager {
     static async getAssetsByOwner(walletAddress: string): Promise<{ sol: Asset, assets: Asset[] }> {
         const heliusData = await HeliusManager.getAssetsByOwner(walletAddress, {
             showNativeBalance: true,
-            showFungible: true,
+            // showFungible: true,
             showSystemMetadata: true,
-            showGrandTotal: false,
-            showClosedAccounts: false,
-            showZeroBalance: false,
-            showCollectionMetadata: false,
-            showUnverifiedCollections: false,
-            showRawData: false,
+            // showGrandTotal: false,
+            // showClosedAccounts: false,
+            // showZeroBalance: false,
+            // showCollectionMetadata: false,
+            // showUnverifiedCollections: false,
+            // showRawData: false,
         });
         const heliusAssets = heliusData.items;
         const nativeBalance = heliusData.nativeBalance;
