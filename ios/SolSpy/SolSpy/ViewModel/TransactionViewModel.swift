@@ -174,4 +174,10 @@ class TransactionViewModel: ObservableObject {
             self?.showToast = false
         }
     }
+    
+    // Копирует адрес подписанта в буфер обмена
+    func copySignerAddress(_ address: String) {
+        UIPasteboard.general.string = address
+        showToast(message: "Signer address copied")
+    }
 } 

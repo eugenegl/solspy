@@ -35,4 +35,27 @@ final class NavigationCoordinator: ObservableObject {
     func popToRoot() {
         path.removeLast(path.count)
     }
+    
+    // MARK: - Universal Links navigation methods
+    func navigateToWallet(address: String) {
+        // Сначала сбрасываем до root, затем переходим к нужному экрану
+        popToRoot()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.showWallet(address: address)
+        }
+    }
+    
+    func navigateToToken(address: String) {
+        popToRoot()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.showToken(address: address)
+        }
+    }
+    
+    func navigateToTransaction(signature: String) {
+        popToRoot()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.showTransaction(signature: signature)
+        }
+    }
 } 

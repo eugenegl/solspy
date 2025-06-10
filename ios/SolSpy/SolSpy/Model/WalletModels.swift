@@ -84,6 +84,7 @@ struct Transaction: Identifiable {
     let tokenSymbol: String?
     let date: Date
     let address: String
+    let signature: String
     let isFailed: Bool
     let isIncoming: Bool
     
@@ -94,12 +95,13 @@ struct Transaction: Identifiable {
     let toSymbol: String?
     
     // Default init for most transactions
-    init(type: TransactionType, amount: Double?, tokenSymbol: String?, date: Date, address: String, isIncoming: Bool = false, isFailed: Bool = false) {
+    init(type: TransactionType, amount: Double?, tokenSymbol: String?, date: Date, address: String, signature: String, isIncoming: Bool = false, isFailed: Bool = false) {
         self.type = type
         self.amount = amount
         self.tokenSymbol = tokenSymbol
         self.date = date
         self.address = address
+        self.signature = signature
         self.isIncoming = isIncoming
         self.isFailed = isFailed
         self.fromAmount = nil
@@ -109,10 +111,11 @@ struct Transaction: Identifiable {
     }
     
     // Init for swap transactions
-    init(date: Date, address: String, fromAmount: Double, fromSymbol: String, toAmount: Double, toSymbol: String) {
+    init(date: Date, address: String, signature: String, fromAmount: Double, fromSymbol: String, toAmount: Double, toSymbol: String) {
         self.type = .swap
         self.date = date
         self.address = address
+        self.signature = signature
         self.amount = nil
         self.tokenSymbol = nil
         self.isIncoming = false
@@ -124,8 +127,8 @@ struct Transaction: Identifiable {
     }
     
     // Init for failed transactions
-    static func failed(date: Date, address: String) -> Transaction {
-        return Transaction(type: .failed, amount: nil, tokenSymbol: nil, date: date, address: address, isIncoming: false, isFailed: true)
+    static func failed(date: Date, address: String, signature: String) -> Transaction {
+        return Transaction(type: .failed, amount: nil, tokenSymbol: nil, date: date, address: address, signature: signature, isIncoming: false, isFailed: true)
     }
 }
 

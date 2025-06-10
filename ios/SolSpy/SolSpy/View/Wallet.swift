@@ -135,12 +135,12 @@ struct Wallet: View {
                                                         Text(viewModel.tokenCountFormatted)
                                                             .foregroundStyle(.white)
                                                             .font(.subheadline)
-                                                        Text("(\(viewModel.tokenBalanceUSD))")
+                                                        Text("(\(viewModel.tokenBalanceUSDRounded))")
                                                             .foregroundStyle(.gray)
                                                             .font(.subheadline)
                                                     }
                                                 }
-                                                .frame(width: 160, alignment: .leading)
+                                                .frame(width: 180, alignment: .leading)
                                             }
                                             
                                             // USDC кнопка - теперь работает как кнопка для открытия sheet
@@ -153,9 +153,11 @@ struct Wallet: View {
                                                         symbol: "USDC"
                                                     )
                                                     
-                                                    Text(viewModel.usdcMaskFormatted)
+                                                    Text(viewModel.usdcMaskFormattedWithoutUSD)
                                                         .foregroundStyle(.white)
                                                         .font(.system(size: 16))
+                                                        .lineLimit(1)
+                                                        .truncationMode(.tail)
                                                     Spacer()
                                                     Image(systemName: "plus")
                                                         .foregroundStyle(.white.opacity(0.5))
@@ -284,6 +286,7 @@ struct Wallet: View {
                                     .background(Color.white.opacity(0.05))
                                     .cornerRadius(12)
                             }
+                            .opacity(UniversalLinkService.isUniversalLinksEnabled ? 1 : 0)
                             
                             // Кнопка копировать
                             Button(action: {
@@ -296,6 +299,7 @@ struct Wallet: View {
                                     .background(Color.white.opacity(0.05))
                                     .cornerRadius(12)
                             }
+                            .opacity(UniversalLinkService.isUniversalLinksEnabled ? 1 : 0)
                         }
                     }
                     .padding(.horizontal, 20)
@@ -376,6 +380,7 @@ struct Wallet: View {
 struct TransactionCard: View {
     let transaction: Transaction
     @ObservedObject var viewModel: WalletViewModel
+    @EnvironmentObject private var coordinator: NavigationCoordinator
     
     init(transaction: Transaction, viewModel: WalletViewModel) {
         self.transaction = transaction
@@ -383,138 +388,20 @@ struct TransactionCard: View {
     }
     
     var body: some View {
-        VStack {
-            VStack(alignment: .leading, spacing: 20) {
+        Button(action: {
+            // Переходим к детальному экрану транзакции
+            coordinator.showTransaction(signature: transaction.signature)
+        }) {
+            VStack {
+                VStack(alignment: .leading, spacing: 20) {
                 // Заголовок карточки
                 HStack {
                     Text(transaction.type.rawValue)
                         .foregroundStyle(transaction.isFailed ? Color(red: 0.894, green: 0.247, blue: 0.145) : Color.white)
                         .font(.subheadline)
                     Spacer()
-                    // Иконки (могут быть динамическими в зависимости от транзакции)
-                    Image(systemName: "dollarsign.circle.fill")
-                        .foregroundStyle(.white)
-                    Image(systemName: "dollarsign.circle.fill")
-                        .foregroundStyle(.white)
                 }
-                
-                // Содержимое транзакции в зависимости от типа
-                if transaction.isFailed {
-                    // Неудачная транзакция
-                    HStack {
-                        Text("Transaction failed")
-                            .foregroundStyle(Color(red: 0.894, green: 0.247, blue: 0.145))
-                            .font(.subheadline)
-                    }
-                } else if transaction.type == .swap {
-                    // Своп транзакция
-                    HStack {
-                        if let fromAmount = transaction.fromAmount, let fromSymbol = transaction.fromSymbol,
-                           let toAmount = transaction.toAmount, let toSymbol = transaction.toSymbol {
-                            // От токена
-                            HStack(spacing: 2) {
-                                TokenLogoView(
-                                    logoUrl: viewModel.getTokenLogo(symbol: fromSymbol),
-                                    symbol: fromSymbol,
-                                    size: 16
-                                )
-                                
-                                Text(fromAmount.formatAsTokenAmount())
-                                    .foregroundStyle(.white)
-                                    .font(.subheadline)
-                                
-                                Text(fromSymbol)
-                                    .foregroundStyle(.white)
-                                    .font(.subheadline)
-                            }
-                            
-                            Image(systemName: "arrow.left.arrow.right")
-                                .foregroundStyle(.white)
-                                .font(.system(size: 12))
-                            
-                            // К токену
-                            HStack(spacing: 2) {
-                                TokenLogoView(
-                                    logoUrl: viewModel.getTokenLogo(symbol: toSymbol),
-                                    symbol: toSymbol,
-                                    size: 16
-                                )
-                                
-                                Text(toAmount.formatAsTokenAmount())
-                                    .foregroundStyle(.white)
-                                    .font(.subheadline)
-                                
-                                Text(toSymbol)
-                                    .foregroundStyle(.white)
-                                    .font(.subheadline)
-                            }
-                        }
-                    }
-                } else if transaction.type == .burn {
-                    // Транзакция сжигания
-                    HStack {
-                        Text("Burned")
-                            .foregroundStyle(.white)
-                            .font(.subheadline)
-                        if let amount = transaction.amount, let symbol = transaction.tokenSymbol {
-                            HStack(spacing: 4) {
-                                TokenLogoView(
-                                    logoUrl: viewModel.getTokenLogo(symbol: symbol),
-                                    symbol: symbol,
-                                    size: 16
-                                )
-                                
-                                Text(amount.formatAsTokenAmount())
-                                    .foregroundStyle(.white)
-                                    .font(.subheadline)
-                                Text(symbol)
-                                    .foregroundStyle(.white)
-                                    .font(.subheadline)
-                            }
-                        }
-                    }
-                } else if transaction.type == .generic {
-                    // Общая транзакция без доп. информации
-                    HStack {
-                        Text("---")
-                            .foregroundStyle(Color.white)
-                            .font(.subheadline)
-                    }
-                } else {
-                    // Обычная транзакция с суммой и токеном
-                    HStack {
-                        // Индикатор входящей/исходящей транзакции
-                        ZStack {
-                            Image(systemName: transaction.isIncoming ? "plus" : "minus")
-                                .foregroundStyle(transaction.isIncoming ? Color(red: 0.247, green: 0.918, blue: 0.286) : Color(red: 0.894, green: 0.247, blue: 0.145))
-                                .font(.system(size: 12))
-                            Circle()
-                                .foregroundStyle((transaction.isIncoming ? Color(red: 0.247, green: 0.918, blue: 0.286) : Color(red: 0.894, green: 0.247, blue: 0.145)).opacity(0.1))
-                                .frame(width: 20, height: 20)
-                        }
-                        
-                        if let amount = transaction.amount, let symbol = transaction.tokenSymbol {
-                            HStack(spacing: 4) {
-                                TokenLogoView(
-                                    logoUrl: viewModel.getTokenLogo(symbol: symbol),
-                                    symbol: symbol,
-                                    size: 16
-                                )
-                                
-                                HStack(spacing: 2) {
-                                    Text(amount.formatAsTokenAmount())
-                                        .foregroundStyle(.white)
-                                        .font(.subheadline)
-                                    
-                                    Text(symbol)
-                                        .foregroundStyle(.white)
-                                        .font(.subheadline)
-                                }
-                            }
-                        }
-                    }
-                }
-                
+
                 // Нижняя часть карточки с датой и адресом
                 HStack {
                     Text(transaction.date.timeAgo())
@@ -534,21 +421,22 @@ struct TransactionCard: View {
                     }
                 }
             }
-            .padding(10)
+                .padding(10)
+            }
+            .clipped()
+            .cornerRadius(15)
+            .overlay(
+                RoundedRectangle(cornerRadius: 15)
+                    .stroke(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 0.5
+                    )
+            )
         }
-        .clipped()
-        .cornerRadius(15)
-        .overlay(
-            RoundedRectangle(cornerRadius: 15)
-                .stroke(
-                    LinearGradient(
-                        gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.1)]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 0.5
-                )
-        )
     }
     
     // Функция для формирования короткого адреса

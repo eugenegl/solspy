@@ -99,17 +99,23 @@ final class TokenViewModel: ObservableObject {
 
     func copyTokenLink() {
         guard let addr = tokenData?.address else { return }
-        UIPasteboard.general.string = "solspy://token/\(addr)"
+        UniversalLinkService.shared.copyTokenLink(address: addr)
         showCopiedToast = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { self.showCopiedToast = false }
     }
+    
+    func copyTokenAddress() {
+        guard let addr = tokenData?.address else { return }
+        UIPasteboard.general.string = addr
+        showToast(message: "Address copied")
+    }
     func shareToken() { showShareSheet = true }
     func getShareItems() -> [Any] {
-        var items: [Any] = ["Token: \(tokenName)"]
-        if let addr = tokenData?.address, let url = URL(string: "https://solspy.app/token/\(addr)") {
-            items.append(contentsOf: ["Address: \(addr)", url])
-        }
-        return items
+        guard let addr = tokenData?.address else { return [] }
+        return UniversalLinkService.shared.generateTokenShareItems(
+            address: addr,
+            tokenName: tokenName
+        )
     }
 
     // MARK: – Toast helper

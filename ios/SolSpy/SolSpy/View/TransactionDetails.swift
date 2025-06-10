@@ -99,7 +99,7 @@ struct TransactionDetails: View {
                             case .overview:
                                 OverviewTabView(transaction: transaction, viewModel: viewModel)
                             case .solBalanceChange:
-                                SolBalanceChangeTabView(transaction: transaction)
+                                SolBalanceChangeTabView(transaction: transaction, viewModel: viewModel)
                             case .tokenBalanceChange:
                                 TokenBalanceChangeTabView(transaction: transaction)
                             }
@@ -160,6 +160,7 @@ struct TransactionDetails: View {
                                         .background(Color.white.opacity(0.05))
                                         .cornerRadius(12)
                                 }
+                                .opacity(UniversalLinkService.isUniversalLinksEnabled ? 1 : 0)
                                 
                                 // Кнопка копировать
                                 Button(action: {
@@ -172,6 +173,7 @@ struct TransactionDetails: View {
                                         .background(Color.white.opacity(0.05))
                                         .cornerRadius(12)
                                 }
+                                .opacity(UniversalLinkService.isUniversalLinksEnabled ? 1 : 0)
                             }
                         }
                         .padding(.horizontal, 20)
@@ -248,8 +250,7 @@ struct TransactionDetails: View {
     // Функция копирования ссылки на транзакцию
     private func copyTransactionLink() {
         guard let transaction = viewModel.transaction else { return }
-        let link = "solspy://transaction/\(transaction.signature)"
-        UIPasteboard.general.string = link
+        UniversalLinkService.shared.copyTransactionLink(signature: transaction.signature)
         
         // Показываем toast уведомление
         showCopiedToast = true
@@ -268,10 +269,9 @@ struct TransactionDetails: View {
     private func getShareItems() -> [Any] {
         guard let transaction = viewModel.transaction else { return [] }
         
-        return [
-            "Transaction: \(transaction.signature)",
-            "View transaction details: https://solspy.app/tx/\(transaction.signature)"
-        ]
+        return UniversalLinkService.shared.generateTransactionShareItems(
+            signature: transaction.signature
+        )
     }
 }
 
@@ -381,10 +381,13 @@ struct OverviewTabView: View {
                     
                     Spacer()
                     
-                    Image(systemName: "document.on.document")
-                        .foregroundStyle(.white.opacity(0.5))
-                        .font(.system(size: 12))
-                    
+                    Button(action: {
+                        viewModel.copySignerAddress(transaction.feePayer)
+                    }) {
+                        Image(systemName: "document.on.document")
+                            .foregroundStyle(.white.opacity(0.5))
+                            .font(.system(size: 12))
+                    }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -433,8 +436,11 @@ struct OverviewTabView: View {
                             Text(transaction.formattedFee)
                                 .foregroundStyle(.white)
                                 .font(.subheadline)
-                            Image(systemName: "dollarsign.circle.fill")
-                                .foregroundStyle(.white)
+                            TokenLogoView(
+                                logoUrl: "https://light.dangervalley.com/static/sol.png",
+                                symbol: "SOL",
+                                size: 16
+                            )
                             Text("SOL")
                                 .foregroundStyle(.white)
                                 .font(.subheadline)
@@ -511,6 +517,7 @@ struct OverviewTabView: View {
 // Представление для таба SOL Balance Change
 struct SolBalanceChangeTabView: View {
     let transaction: DetailedTransaction
+    let viewModel: TransactionViewModel
     
     var body: some View {
         ScrollView {
@@ -524,7 +531,7 @@ struct SolBalanceChangeTabView: View {
                 
                 // Фильтруем аккаунты, у которых есть изменения
                 ForEach(transaction.accountData.filter { $0.nativeBalanceChange != 0 }, id: \.account) { account in
-                    SolBalanceCardView(account: account)
+                    SolBalanceCardView(account: account, viewModel: viewModel)
                 }
                 
                 // Если нет данных для отображения
@@ -554,6 +561,7 @@ struct SolBalanceChangeTabView: View {
 // Карточка для SOL Balance Change
 struct SolBalanceCardView: View {
     let account: AccountData
+    let viewModel: TransactionViewModel
     
     private var balanceBefore: Double {
         let currentBalance = Double(account.nativeBalanceChange) / 1_000_000_000.0
@@ -611,10 +619,17 @@ struct SolBalanceCardView: View {
                     
                     Spacer()
                     
-                    // Иконка копирования
-                    Image(systemName: "doc.on.doc")
-                        .foregroundColor(.white.opacity(0.5))
-                        .font(.system(size: 14))
+                    // Иконка копирования только для не-системных программ
+                    if !isSystemProgram {
+                        Button(action: {
+                            UIPasteboard.general.string = account.account
+                            viewModel.showToast(message: "Address copied")
+                        }) {
+                            Image(systemName: "doc.on.doc")
+                                .foregroundColor(.white.opacity(0.5))
+                                .font(.system(size: 14))
+                        }
+                    }
                 }
                 
                 // Теги
@@ -786,15 +801,22 @@ struct TransferActionView: View {
                     HStack {
                         ZStack {
                             Circle()
-                                .foregroundStyle(Color.white.opacity(0.1))
+                                .foregroundStyle(Color.blue.opacity(0.2))
                                 .frame(width: 20, height: 20)
+                            if programName == "System Program" {
+                                Image(systemName: "gearshape.fill")
+                                    .foregroundStyle(Color.blue)
+                                    .font(.system(size: 10))
+                            } else {
+                                // Для других программ можно добавить другие иконки
+                                Image(systemName: "cube.fill")
+                                    .foregroundStyle(Color.gray)
+                                    .font(.system(size: 10))
+                            }
                         }
                         Text(programName)
                             .foregroundStyle(.white)
                             .font(.subheadline)
-                        Image(systemName: "document.on.document")
-                            .foregroundStyle(.white.opacity(0.5))
-                            .font(.system(size: 12))
                     }
                     
                 }
@@ -829,8 +851,11 @@ struct TransferActionView: View {
                     Text(amount)
                         .foregroundStyle(.white)
                         .font(.subheadline)
-                    Image(systemName: "dollarsign.circle.fill")
-                        .foregroundStyle(.white)
+                    TokenLogoView(
+                        logoUrl: "https://light.dangervalley.com/static/sol.png",
+                        symbol: "SOL",
+                        size: 16
+                    )
                     Text("SOL")
                         .foregroundStyle(.white)
                         .font(.subheadline)

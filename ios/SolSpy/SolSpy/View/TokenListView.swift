@@ -37,6 +37,7 @@ struct TokenListView: View {
                         // SOL токен
                         if let solBalance = viewModel.walletData?.balance {
                             Button(action: {
+                                dismiss() // Закрываем sheet
                                 coordinator.showToken(address: solBalance.address)
                             }) {
                                 TokenRowView(
@@ -54,6 +55,7 @@ struct TokenListView: View {
                         if let assets = viewModel.walletData?.assets, !assets.isEmpty {
                             ForEach(assets, id: \.address) { asset in
                                 Button(action: {
+                                    dismiss() // Закрываем sheet
                                     coordinator.showToken(address: asset.address)
                                 }) {
                                     TokenRowView(

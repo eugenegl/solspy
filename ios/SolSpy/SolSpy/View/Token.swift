@@ -113,6 +113,7 @@ struct Token: View {
                                 .background(Color.white.opacity(0.05))
                                 .cornerRadius(12)
                         }
+                        .opacity(UniversalLinkService.isUniversalLinksEnabled ? 1 : 0)
                         
                         Button(action: { viewModel.copyTokenLink() }) {
                             Image(systemName: "doc.on.doc")
@@ -122,6 +123,7 @@ struct Token: View {
                                 .background(Color.white.opacity(0.05))
                                 .cornerRadius(12)
                         }
+                        .opacity(UniversalLinkService.isUniversalLinksEnabled ? 1 : 0)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -365,9 +367,13 @@ private extension Token {
                         Text(viewModel.tokenAddressShort)
                             .foregroundStyle(.white)
                             .font(.subheadline)
-                        Image(systemName: "document.on.document")
-                            .foregroundStyle(.white.opacity(0.5))
-                            .font(.system(size: 12))
+                        Button(action: {
+                            viewModel.copyTokenAddress()
+                        }) {
+                            Image(systemName: "document.on.document")
+                                .foregroundStyle(.white.opacity(0.5))
+                                .font(.system(size: 12))
+                        }
                     }
                 }
                 
@@ -377,19 +383,16 @@ private extension Token {
                         .font(.caption)
                     HStack {
                         ZStack {
-                            Image(systemName: "")
-                                .foregroundStyle(Color(red: 0.247, green: 0.918, blue: 0.286))
-                                .font(.system(size: 12))
                             Circle()
-                                .foregroundStyle(Color.white.opacity(0.1))
+                                .foregroundStyle(Color.purple.opacity(0.2))
                                 .frame(width: 20, height: 20)
+                            Image(systemName: "app.fill")
+                                .foregroundStyle(Color.purple)
+                                .font(.system(size: 10))
                         }
                         Text(viewModel.tokenData?.ownerProgram ?? "Token Program")
                             .foregroundStyle(.white)
                             .font(.subheadline)
-                        Image(systemName: "document.on.document")
-                            .foregroundStyle(.white.opacity(0.5))
-                            .font(.system(size: 12))
                     }
                 }
             }

@@ -219,17 +219,17 @@ class WalletViewModel: ObservableObject {
         let randomAddress = "5KV9Z32iNZoDLSzBg8xzBB7JkvKUgvjSyhn"
         
         // Пример транзакций разных типов
-        let transaction1 = Transaction(type: .transfer, amount: 0.00026, tokenSymbol: "SOL", date: now.addingTimeInterval(-2 * day), address: randomAddress, isIncoming: true)
+        let transaction1 = Transaction(type: .transfer, amount: 0.00026, tokenSymbol: "SOL", date: now.addingTimeInterval(-2 * day), address: randomAddress, signature: "7rhx...bjnQ", isIncoming: true)
         
-        let transaction2 = Transaction(type: .burn, amount: 0.00026, tokenSymbol: "SOL", date: now.addingTimeInterval(-3 * day), address: randomAddress)
+        let transaction2 = Transaction(type: .burn, amount: 0.00026, tokenSymbol: "SOL", date: now.addingTimeInterval(-3 * day), address: randomAddress, signature: "8xhm...cpk2")
         
-        let transaction3 = Transaction(date: now.addingTimeInterval(-5 * day), address: randomAddress, fromAmount: 6.94, fromSymbol: "JUP", toAmount: 0.00026, toSymbol: "SOL")
+        let transaction3 = Transaction(date: now.addingTimeInterval(-5 * day), address: randomAddress, signature: "9yln...dmr4", fromAmount: 6.94, fromSymbol: "JUP", toAmount: 0.00026, toSymbol: "SOL")
         
-        let transaction4 = Transaction.failed(date: now.addingTimeInterval(-7 * day), address: randomAddress)
+        let transaction4 = Transaction.failed(date: now.addingTimeInterval(-7 * day), address: randomAddress, signature: "3zlp...fjk8")
         
-        let transaction5 = Transaction(type: .generic, amount: nil, tokenSymbol: nil, date: now.addingTimeInterval(-9 * day), address: randomAddress)
+        let transaction5 = Transaction(type: .generic, amount: nil, tokenSymbol: nil, date: now.addingTimeInterval(-9 * day), address: randomAddress, signature: "4amq...ghl6")
         
-        let transaction6 = Transaction(type: .transfer, amount: 0.00026, tokenSymbol: "SOL", date: now.addingTimeInterval(-11 * day), address: randomAddress, isIncoming: false)
+        let transaction6 = Transaction(type: .transfer, amount: 0.00026, tokenSymbol: "SOL", date: now.addingTimeInterval(-11 * day), address: randomAddress, signature: "5bnr...ihj9", isIncoming: false)
         
         transactions = [transaction1, transaction2, transaction3, transaction4, transaction5, transaction6]
     }
@@ -270,6 +270,13 @@ class WalletViewModel: ObservableObject {
         return totalPrice.formatAsCurrency()
     }
     
+    // Информация о стоимости токенов в USD с округлением до 2 знаков
+    var tokenBalanceUSDRounded: String {
+        guard let data = walletData else { return "$0.00" }
+        let totalPrice = data.assets.map { $0.priceInfo?.totalPrice ?? 0 }.reduce(0, +)
+        return String(format: "$%.2f", totalPrice)
+    }
+    
     // Короткий формат адреса
     var walletAddressShort: String {
         return walletData?.shortAddress ?? "Unknown"
@@ -292,6 +299,17 @@ class WalletViewModel: ObservableObject {
         if let usdc = walletData?.assets.first(where: { $0.symbol == "USDC" }) {
             // Если есть, показываем актуальный баланс и эквивалент в USD
             return "\(usdc.uiAmount.formatAsTokenAmount()) USDC (\((usdc.priceInfo?.totalPrice ?? 0).formatAsCurrency()))"
+        }
+        // Иначе используем заглушку
+        return "View all tokens"
+    }
+    
+    // Маска для USDC без эквивалента в USD (только количество токена)
+    var usdcMaskFormattedWithoutUSD: String {
+        // Проверяем, есть ли USDC в списке токенов
+        if let usdc = walletData?.assets.first(where: { $0.symbol == "USDC" }) {
+            // Если есть, показываем только актуальный баланс
+            return "\(usdc.uiAmount.formatAsTokenAmount()) USDC"
         }
         // Иначе используем заглушку
         return "View all tokens"
@@ -323,11 +341,8 @@ class WalletViewModel: ObservableObject {
     func copyWalletLink() {
         guard let address = walletData?.address else { return }
         
-        // Формируем ссылку на кошелек
-        let link = "solspy://wallet/\(address)"
-        
-        // Копируем в буфер обмена
-        UIPasteboard.general.string = link
+        // Используем UniversalLinkService для копирования умной ссылки
+        UniversalLinkService.shared.copyWalletLink(address: address)
         
         // Показываем уведомление
         showCopiedToast = true
@@ -338,24 +353,6 @@ class WalletViewModel: ObservableObject {
         }
     }
     
-    // Функция для генерации ссылки на App Store
-    func getAppStoreLink() -> URL? {
-        // В реальном приложении здесь должен быть реальный ID приложения
-        let appStoreId = "123456789"
-        let appStoreURL = URL(string: "https://apps.apple.com/app/id\(appStoreId)")
-        return appStoreURL
-    }
-    
-    // Функция для генерации Universal Link или Deep Link
-    func getDeepLink() -> URL? {
-        guard let address = walletData?.address else { return nil }
-        
-        // Формирование Universal Link (в реальном приложении должен быть настроен домен)
-        // ex. https://solspy.app/wallet/wallet_address
-        let universalLink = URL(string: "https://solspy.app/wallet/\(address)")
-        return universalLink
-    }
-    
     // Функция для поделиться ссылкой
     func shareWallet() {
         showShareSheet = true
@@ -363,23 +360,13 @@ class WalletViewModel: ObservableObject {
     
     // Функция для получения массива элементов для ShareSheet
     func getShareItems() -> [Any] {
-        var items: [Any] = []
+        guard let address = walletData?.address else { return [] }
         
-        // Добавляем текстовое описание
-        let walletTitle = "Solana Wallet"
-        items.append(walletTitle)
-        
-        // Добавляем сам адрес кошелька
-        if let address = walletData?.address {
-            items.append("Address: \(address)")
-        }
-        
-        // Добавляем Deep Link или Universal Link если есть
-        if let deepLink = getDeepLink() {
-            items.append(deepLink)
-        }
-        
-        return items
+        // Используем UniversalLinkService для генерации элементов шаринга
+        return UniversalLinkService.shared.generateWalletShareItems(
+            address: address,
+            walletData: walletData
+        )
     }
     
     // MARK: - Mapping API → UI transactions
@@ -422,6 +409,7 @@ class WalletViewModel: ObservableObject {
                     tokenSymbol: symbol,
                     date: date,
                     address: tokenTransfer.fromUserAccount ?? dt.feePayer,
+                    signature: dt.signature,
                     isIncoming: isIncoming,
                     isFailed: isFailed
                 )
@@ -461,6 +449,7 @@ class WalletViewModel: ObservableObject {
                 tokenSymbol: symbol,
                 date: date,
                 address: isIncoming ? dt.feePayer : dt.nativeTransfers.first?.toUserAccount ?? "",
+                signature: dt.signature,
                 isIncoming: isIncoming,
                 isFailed: isFailed
             )

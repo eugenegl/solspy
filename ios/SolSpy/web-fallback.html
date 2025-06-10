@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SolSpy - Solana Blockchain Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #9C27B0, #673AB7);
+            border-radius: 20px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #fff, #f0f0f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            margin-bottom: 30px;
+            opacity: 0.8;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .features {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .feature-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #9C27B0, #673AB7);
+            border-radius: 6px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .open-app-btn {
+            display: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .open-app-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo">S</div>
+        <h1>SolSpy</h1>
+        <p class="subtitle">Исследуйте блокчейн Solana</p>
+
+        <a href="#" id="openAppBtn" class="open-app-btn">Открыть в приложении</a>
+
+        <a href="https://apps.apple.com/app/id123456789" class="download-btn">
+            Скачать из App Store
+        </a>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon"></div>
+                <span>Просматривайте кошельки Solana</span>
+            </div>
+            <div class="feature">
+                <div class="feature-icon"></div>
+                <span>Исследуйте токены и NFT</span>
+            </div>
+            <div class="feature">
+                <div class="feature-icon"></div>
+                <span>Отслеживайте транзакции</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Попытка открыть приложение через Deep Link
+        function tryOpenApp() {
+            const path = window.location.pathname;
+            const deepLink = `solspy:/${path}`;
+
+            // Показываем кнопку "Открыть в приложении"
+            document.getElementById('openAppBtn').style.display = 'inline-block';
+            document.getElementById('openAppBtn').href = deepLink;
+
+            // Автоматическая попытка открыть приложение
+            setTimeout(() => {
+                window.location.href = deepLink;
+            }, 500);
+        }
+
+        // Определяем iOS устройство
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+        if (isIOS) {
+            tryOpenApp();
+        }
+
+        // Обновляем ссылку на App Store с реальным ID
+        document.querySelector('.download-btn').addEventListener('click', function (e) {
+            // Здесь можно добавить аналитику
+            console.log('App Store link clicked');
+        });
+    </script>
+</body>
+
+</html>
