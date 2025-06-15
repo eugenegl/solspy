@@ -40,6 +40,7 @@ export const SandwichSchema = new mongoose.Schema<ISandwich>({
 
 SandwichSchema.index({ victimTxHash: 1 }, { unique: true });
 SandwichSchema.index({ createdAt: -1 });
+SandwichSchema.index({ createdAt: 1 });
 
 SandwichSchema.methods.toJSON = function () {
     return {
