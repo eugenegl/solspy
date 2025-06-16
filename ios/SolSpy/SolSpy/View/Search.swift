@@ -38,19 +38,19 @@ struct Search: View {
                             isLoading: homeViewModel.isPriceLoading
                         )
                         
-                        // Latest Transactions Widget
-                        LatestTransactionsWidget(
-                            transactions: homeViewModel.latestTransactions,
-                            isLoading: homeViewModel.isTransactionsLoading,
-                            webSocketStatus: homeViewModel.webSocketStatusText,
-                            isWebSocketConnected: homeViewModel.isWebSocketConnected
-                        )
-                        .environmentObject(coordinator)
+                        // MEV Bot Tracker Widget
+                        MEVBotTrackerWidget()
+                            .environmentObject(coordinator)
+                            .environmentObject(homeViewModel)
                         
-                        // Top Tokens Widget
-                        TopTokensWidget(
+                        // Swipeable Widgets Container (Latest Transactions + Top Tokens)
+                        SwipeableWidgetsContainer(
+                            transactions: homeViewModel.latestTransactions,
+                            isTransactionsLoading: homeViewModel.isTransactionsLoading,
+                            webSocketStatus: homeViewModel.webSocketStatusText,
+                            isWebSocketConnected: homeViewModel.isWebSocketConnected,
                             tokens: homeViewModel.topTokens,
-                            isLoading: homeViewModel.isTopTokensLoading
+                            isTokensLoading: homeViewModel.isTopTokensLoading
                         )
                         .environmentObject(coordinator)
                         

@@ -6,14 +6,19 @@ class HomeViewModel: ObservableObject {
     @Published var solPrice: SOLPriceDisplay?
     @Published var latestTransactions: [LatestTransaction] = []
     @Published var topTokens: [TopToken] = []
+    @Published var mevStats: SandwichStats?
+    @Published var lastMEVAttackTime: Date?
     @Published var isPriceLoading: Bool = false
     @Published var isTransactionsLoading: Bool = false
     @Published var isTopTokensLoading: Bool = false
+    @Published var isMEVLoading: Bool = false
     @Published var webSocketState: WebSocketState = .disconnected
     
     private var priceTimer: Timer?
     private var tokensTimer: Timer?
+    private var mevTimer: Timer?
     private var webSocketManager = SolanaWebSocketManager.shared
+    private var mevAPIService = MEVAPIService.shared
     private var cancellables = Set<AnyCancellable>()
     
     init() {
@@ -29,6 +34,9 @@ class HomeViewModel: ObservableObject {
         tokensTimer?.invalidate()
         tokensTimer = nil
         
+        mevTimer?.invalidate()
+        mevTimer = nil
+        
         // Вызываем disconnect в Task для совместимости с @MainActor
         Task { @MainActor in
             webSocketManager.disconnect()
@@ -42,25 +50,22 @@ class HomeViewModel: ObservableObject {
         Task {
             await fetchSOLPrice()
             await fetchTopTokens()
+            await fetchMEVStats()
             startWebSocketConnection()
         }
     }
     
     // MARK: - SOL Price Methods
     func fetchSOLPrice() async {
+        guard !isPriceLoading else { return }
+        
         isPriceLoading = true
-        print("🔄 Starting SOL price fetch...")
         
         do {
-            let priceData = try await BinanceAPI.shared.fetchSOLPrice()
-            solPrice = priceData
-            print("✅ SOL price loaded: \(priceData.formattedPrice), change: \(priceData.formattedChange)")
+            let price = try await BinanceAPI.shared.fetchSOLPrice()
+            solPrice = price
         } catch {
-            print("❌ Failed to fetch SOL price: \(error)")
-            
-            // Устанавливаем nil чтобы показать placeholder вместо устаревших данных
-            solPrice = nil
-            print("🔄 Price data cleared due to API error")
+            print("❌ Error fetching SOL price: \(error)")
         }
         
         isPriceLoading = false
@@ -68,50 +73,55 @@ class HomeViewModel: ObservableObject {
     
     // MARK: - WebSocket Methods
     private func setupWebSocketSubscriptions() {
-        print("🔗 Setting up WebSocket subscriptions...")
-        
-        // Подписываемся на события WebSocket
-        webSocketManager.eventPublisher
+        webSocketManager.$connectionState
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] event in
-                guard let self = self else { 
-                    print("❌ Self is nil in WebSocket event handler")
-                    return 
-                }
-                
-                print("📨 Received WebSocket event: \(event)")
-                
-                switch event {
-                case .newTransaction(let transaction):
-                    print("🆕 New transaction event received: \(transaction.shortSignature)")
-                    // Обновляем список транзакций
-                    let oldCount = self.latestTransactions.count
-                    self.latestTransactions = self.webSocketManager.latestTransactions
-                    print("📊 Updated transactions: \(oldCount) -> \(self.latestTransactions.count)")
-                    
-                case .connectionStateChanged(let state):
-                    print("🔌 WebSocket state changed: \(state)")
-                    self.webSocketState = state
-                    
-                case .blockUpdate(let blockNumber):
-                    print("📦 New block: \(blockNumber)")
-                }
+            .sink { [weak self] state in
+                self?.webSocketState = state
             }
             .store(in: &cancellables)
         
-        print("✅ WebSocket subscriptions set up, cancellables count: \(cancellables.count)")
+        webSocketManager.$latestTransactions
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] transactions in
+                self?.latestTransactions = transactions
+            }
+            .store(in: &cancellables)
     }
     
     private func startWebSocketConnection() {
-        isTransactionsLoading = true
+        Task { @MainActor in
+            webSocketManager.connect()
+        }
+    }
+    
+    var webSocketStatusText: String {
+        switch webSocketState {
+        case .connected:
+            return "Connected"
+        case .connecting:
+            return "Connecting..."
+        case .disconnected:
+            return "Disconnected"
+        case .error:
+            return "Connection Error"
+        }
+    }
+    
+    var isWebSocketConnected: Bool {
+        webSocketState == .connected
+    }
+    
+    func refreshAll() async {
+        // Параллельные обновления для лучшей производительности
+        async let priceTask: Void = fetchSOLPrice()
+        async let tokensTask: Void = fetchTopTokens()
+        async let mevTask: Void = fetchMEVStats()
         
-        // Загружаем начальные mock данные
-        latestTransactions = MockTransactionsProvider.generateMockTransactions()
+        // Ждем завершения всех задач
+        _ = await (priceTask, tokensTask, mevTask)
         
-        // Подключаемся к WebSocket для реалтайм обновлений
-        webSocketManager.connect()
-        
-        isTransactionsLoading = false
+        // Обновляем транзакции через WebSocket переподключение
+        refreshTransactions()
     }
     
     private func refreshTransactions() {
@@ -126,6 +136,40 @@ class HomeViewModel: ObservableObject {
                 }
             }
         }
+    }
+    
+    // MARK: - MEV Methods
+    func fetchMEVStats() async {
+        guard !isMEVLoading else { return }
+        
+        isMEVLoading = true
+        
+        do {
+            // Используем 7 дней для более свежих данных
+            let response = try await mevAPIService.fetchSandwiches(days: .sevenDays)
+            mevStats = response.stats
+            
+            // Сохраняем время последней атаки для определения устаревших данных
+            if let latestAttack = response.sandwiches.first {
+                print("📊 Latest MEV attack: \(latestAttack.createdAt)")
+                let formatter = ISO8601DateFormatter()
+                formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                if let attackDate = formatter.date(from: latestAttack.createdAt) {
+                    lastMEVAttackTime = attackDate
+                    let hoursAgo = Date().timeIntervalSince(attackDate) / 3600
+                    print("⏰ Latest attack was \(String(format: "%.1f", hoursAgo)) hours ago")
+                    
+                    if hoursAgo > 2 {
+                        print("⚠️ MEV data seems stale (>2 hours old)")
+                    }
+                }
+            }
+            
+        } catch {
+            print("❌ Error fetching MEV stats: \(error)")
+        }
+        
+        isMEVLoading = false
     }
     
     // MARK: - Timer Management
@@ -144,6 +188,13 @@ class HomeViewModel: ObservableObject {
             }
         }
         
+        // Обновление MEV статистики каждые 2 минуты (данные не так критичны для реалтайма)
+        mevTimer = Timer.scheduledTimer(withTimeInterval: 120.0, repeats: true) { _ in
+            Task { @MainActor in
+                await self.fetchMEVStats()
+            }
+        }
+        
         // WebSocket обеспечивает реалтайм обновления транзакций
     }
     
@@ -154,6 +205,9 @@ class HomeViewModel: ObservableObject {
         tokensTimer?.invalidate()
         tokensTimer = nil
         
+        mevTimer?.invalidate()
+        mevTimer = nil
+        
         // Отключаем WebSocket
         Task { @MainActor in
             webSocketManager.disconnect()
@@ -162,41 +216,19 @@ class HomeViewModel: ObservableObject {
     
     // MARK: - Top Tokens Methods
     func fetchTopTokens() async {
+        guard !isTopTokensLoading else { return }
+        
         isTopTokensLoading = true
-        print("🔄 Starting top tokens fetch...")
         
         do {
             let tokens = try await SolSpyAPI.shared.fetchTopTokens()
-            
-            // Проверяем что получили валидные данные
-            if !tokens.isEmpty {
-                topTokens = tokens
-                print("✅ Top tokens loaded: \(tokens.count) tokens with real logos")
-                
-                // Обновляем базовые данные для следующих обновлений
-                TopToken.mockTokens = tokens
-            } else {
-                print("⚠️ Received empty tokens list, keeping current data")
-            }
+            topTokens = tokens
         } catch {
-            print("❌ Failed to fetch top tokens: \(error)")
-            // В случае ошибки показываем последние данные если они есть, иначе mock
-            if topTokens.isEmpty {
-                print("📋 Using fallback mock data")
-                topTokens = TopToken.mockTokens
-            } else {
-                print("📋 Keeping last successful data")
-            }
+            print("❌ Error fetching top tokens: \(error)")
+            topTokens = TopToken.mockTokens
         }
         
         isTopTokensLoading = false
-    }
-    
-    // MARK: - Pull to Refresh
-    func refreshAll() async {
-        await fetchSOLPrice()
-        await fetchTopTokens()
-        refreshTransactions()
     }
     
     // MARK: - Testing Methods
@@ -204,26 +236,10 @@ class HomeViewModel: ObservableObject {
         await webSocketManager.createTestTransaction()
     }
     
-    // MARK: - WebSocket Status
-    var isWebSocketConnected: Bool {
-        switch webSocketState {
-        case .connected:
-            return true
-        default:
-            return false
-        }
-    }
-    
-    var webSocketStatusText: String {
-        switch webSocketState {
-        case .disconnected:
-            return "Disconnected"
-        case .connecting:
-            return "Connecting..."
-        case .connected:
-            return "Live"
-        case .error(let error):
-            return "Error: \(error.localizedDescription)"
-        }
+    // Computed property для проверки устаревших MEV данных
+    var isMEVDataStale: Bool {
+        guard let lastAttack = lastMEVAttackTime else { return true }
+        let hoursAgo = Date().timeIntervalSince(lastAttack) / 3600
+        return hoursAgo > 2.0 // Считаем устаревшими если старше 2 часов
     }
 } 

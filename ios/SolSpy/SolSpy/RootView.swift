@@ -23,6 +23,10 @@ struct RootView: View {
                         TransactionDetails(transactionSignature: signature)
                             .environmentObject(coordinator)
                             .navigationBarBackButtonHidden(true)
+                    case .mevTracker:
+                        MEVTracker()
+                            .environmentObject(coordinator)
+                            .navigationBarBackButtonHidden(true)
                     }
                 }
         }

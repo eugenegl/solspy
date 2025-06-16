@@ -6,6 +6,7 @@ enum AppRoute: Hashable {
     case wallet(address: String)
     case token(address: String)
     case transaction(signature: String)
+    case mevTracker
 }
 
 // ObservableObject-координатор хранит NavigationPath и предоставляет
@@ -25,6 +26,10 @@ final class NavigationCoordinator: ObservableObject {
 
     func showTransaction(signature: String) {
         path.append(AppRoute.transaction(signature: signature))
+    }
+    
+    func showMEVTracker() {
+        path.append(AppRoute.mevTracker)
     }
 
     func pop() {
