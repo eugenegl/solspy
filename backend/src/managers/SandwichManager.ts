@@ -22,7 +22,9 @@ export class SandwichManager {
     static async fetchSandwiches(): Promise<SolStatzSandwich[]> {
         try{
             const data = await axios.get('https://www.solstatz.com/api/mev/sandwich_events');
+            console.log('solstatz data', data);
             const sandwiches: SolStatzSandwich[] = data.data;
+            console.log('solstatz sandwiches.length', sandwiches.length);
 
             const victimTxHashes = sandwiches.map(sandwich => sandwich.victim_tx_hash);
             const existingSandwiches = await Sandwich.find({ victimTxHash: { $in: victimTxHashes } });
